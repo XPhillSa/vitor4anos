@@ -219,30 +219,50 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
   <section>
     <span class="tag px">LINHA DO TEMPO</span>
     <h2 class="px">O VITOR CRESCENDO</h2>
-    <p class="note" style="margin:0 0 12px">Do colo até o nível 4 — o grande orgulho do papai e da mamãe.</p>
-    <div class="gal">
-      <img src="t1.jpg" alt="Vitor recém-nascido" loading="lazy">
-      <img src="t2.jpg" alt="Vitor bebê no cadeirão" loading="lazy">
-      <img src="t3.jpg" alt="Vitor dando os primeiros passos" loading="lazy">
-      <img src="t4.jpg" alt="Vitor sentado na grama" loading="lazy">
-      <img src="t5.jpg" alt="Vitor pequeno brincando" loading="lazy">
-      <img src="t6.jpg" alt="Vitor de pijama" loading="lazy">
+    <p class="note" style="margin:0 0 12px">Do colo até o nível 4 — o grande orgulho do papai e da mamãe. Arraste para o lado ➜</p>
+    <div class="gal" id="tl">
+      <img src="v01.jpg" alt="Vitor — foto 1 de 40" loading="lazy">
+      <img src="v02.jpg" alt="Vitor — foto 2 de 40" loading="lazy">
+      <img src="v03.jpg" alt="Vitor — foto 3 de 40" loading="lazy">
+      <img src="v04.jpg" alt="Vitor — foto 4 de 40" loading="lazy">
+      <img src="v05.jpg" alt="Vitor — foto 5 de 40" loading="lazy">
+      <img src="v06.jpg" alt="Vitor — foto 6 de 40" loading="lazy">
+      <img src="v07.jpg" alt="Vitor — foto 7 de 40" loading="lazy">
+      <img src="v08.jpg" alt="Vitor — foto 8 de 40" loading="lazy">
+      <img src="v09.jpg" alt="Vitor — foto 9 de 40" loading="lazy">
+      <img src="v10.jpg" alt="Vitor — foto 10 de 40" loading="lazy">
+      <img src="v11.jpg" alt="Vitor — foto 11 de 40" loading="lazy">
+      <img src="v12.jpg" alt="Vitor — foto 12 de 40" loading="lazy">
+      <img src="v13.jpg" alt="Vitor — foto 13 de 40" loading="lazy">
+      <img src="v14.jpg" alt="Vitor — foto 14 de 40" loading="lazy">
+      <img src="v15.jpg" alt="Vitor — foto 15 de 40" loading="lazy">
+      <img src="v16.jpg" alt="Vitor — foto 16 de 40" loading="lazy">
+      <img src="v17.jpg" alt="Vitor — foto 17 de 40" loading="lazy">
+      <img src="v18.jpg" alt="Vitor — foto 18 de 40" loading="lazy">
+      <img src="v19.jpg" alt="Vitor — foto 19 de 40" loading="lazy">
+      <img src="v20.jpg" alt="Vitor — foto 20 de 40" loading="lazy">
+      <img src="v21.jpg" alt="Vitor — foto 21 de 40" loading="lazy">
+      <img src="v22.jpg" alt="Vitor — foto 22 de 40" loading="lazy">
+      <img src="v23.jpg" alt="Vitor — foto 23 de 40" loading="lazy">
+      <img src="v24.jpg" alt="Vitor — foto 24 de 40" loading="lazy">
+      <img src="v25.jpg" alt="Vitor — foto 25 de 40" loading="lazy">
+      <img src="v26.jpg" alt="Vitor — foto 26 de 40" loading="lazy">
+      <img src="v27.jpg" alt="Vitor — foto 27 de 40" loading="lazy">
+      <img src="v28.jpg" alt="Vitor — foto 28 de 40" loading="lazy">
+      <img src="v29.jpg" alt="Vitor — foto 29 de 40" loading="lazy">
+      <img src="v30.jpg" alt="Vitor — foto 30 de 40" loading="lazy">
+      <img src="v31.jpg" alt="Vitor — foto 31 de 40" loading="lazy">
+      <img src="v32.jpg" alt="Vitor — foto 32 de 40" loading="lazy">
+      <img src="v33.jpg" alt="Vitor — foto 33 de 40" loading="lazy">
+      <img src="v34.jpg" alt="Vitor — foto 34 de 40" loading="lazy">
+      <img src="v35.jpg" alt="Vitor — foto 35 de 40" loading="lazy">
+      <img src="v36.jpg" alt="Vitor — foto 36 de 40" loading="lazy">
+      <img src="v37.jpg" alt="Vitor — foto 37 de 40" loading="lazy">
+      <img src="v38.jpg" alt="Vitor — foto 38 de 40" loading="lazy">
+      <img src="v39.jpg" alt="Vitor — foto 39 de 40" loading="lazy">
+      <img src="v40.jpg" alt="Vitor — foto 40 de 40" loading="lazy">
     </div>
-  </section>
-
-  <section>
-    <span class="tag px">GALERIA</span>
-    <h2 class="px">O VITOR HOJE</h2>
-    <div class="gal">
-      <img src="g1.jpg" alt="Vitor com a camisa do Brasil" loading="lazy">
-      <img src="g2.jpg" alt="Vitor de óculos escuros" loading="lazy">
-      <img src="g3.jpg" alt="Vitor explorando a caverna de capacete" loading="lazy">
-      <img src="g4.jpg" alt="Vitor fazendo pose" loading="lazy">
-      <img src="g5.jpg" alt="Vitor brincando na água" loading="lazy">
-      <img src="g6.jpg" alt="Vitor de bicicleta" loading="lazy">
-      <img src="g7.jpg" alt="Vitor no volante" loading="lazy">
-      <img src="g8.jpg" alt="Vitor na praia" loading="lazy">
-    </div>
+    <p class="note px" id="tlc" style="text-align:center;font-size:9px;margin-top:6px">1 / 40</p>
   </section>
 
   <footer class="px">COM AMOR, PAPAI E MAMÃE ♥<br><br>FEITO COM CARINHO PARA O VITOR</footer>
@@ -485,6 +505,9 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
   // tela inicial
   build(); draw(0); x.fillStyle='#1b1b2f'; x.font='12px "Press Start 2P"'; x.textAlign='center'; x.fillText('TOQUE EM JOGAR',W/2,100);
 })();
+/* contador da linha do tempo */
+(function(){ const g=document.getElementById('tl'), c=document.getElementById('tlc'); if(!g) return; const n=g.children.length;
+  g.addEventListener('scroll',()=>{ const i=Math.round(g.scrollLeft/(g.children[0].offsetWidth+14))+1; c.textContent=Math.min(n,i)+' / '+n; },{passive:true}); })();
 </script>
 </body>
 </html>
