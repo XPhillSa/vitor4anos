@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel — Festa do Vitor</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Nunito,system-ui,sans-serif;background:#1b1b2f;color:#eee;padding:16px}
+.px{font-family:'Press Start 2P',monospace}
+h1{font-size:14px;color:#fbd000;margin-bottom:14px}
+.wrap{max-width:960px;margin:0 auto}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.kpi div{background:#2a2a45;border:3px solid #fff2;padding:14px;text-align:center}
+.kpi b{display:block;font-size:26px;color:#fbd000}
+.kpi small{font-size:10px;letter-spacing:1px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+input,button{font:inherit;font-weight:700;padding:10px 12px;border:3px solid #fff3;background:#2a2a45;color:#fff}
+button{background:#e52521;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{padding:8px 10px;border-bottom:1px solid #fff2;text-align:left;vertical-align:top}
+th{background:#2a2a45;font-size:11px;letter-spacing:1px;position:sticky;top:0}
+tr.sim td:first-child{border-left:4px solid #43b047}tr.nao td:first-child{border-left:4px solid #e52521}
+.muted{opacity:.6;font-size:12px}
+details{margin-top:18px}summary{cursor:pointer;font-weight:800;color:#9cc8ff}
+.tbl{overflow:auto;max-height:70vh}
+</style>
+</head>
+<body><div class="wrap">
+<h1 class="px">PAINEL — FESTA DO VITOR</h1>
+<div class="bar">
+  <input id="url" placeholder="URL do Web App (…/exec)" style="flex:2;min-width:240px">
+  <input id="tok" type="password" placeholder="Chave admin" style="flex:1;min-width:140px">
+  <button id="go">Atualizar</button>
+  <button id="csv" style="background:#049cd8">Baixar CSV</button>
+  <span class="muted" id="when"></span>
+</div>
+<div class="kpi" id="kpi"></div>
+<div class="bar"><input id="q" placeholder="Filtrar por nome…" style="flex:1"><label><input type="checkbox" id="soSim" style="width:auto"> só confirmados</label></div>
+<div class="tbl"><table id="t"><thead><tr><th>Nome</th><th>Presença</th><th>Ad.</th><th>Cri.</th><th>Crianças</th><th>Restrição</th><th>Telefone</th><th>Recado</th><th>Quando</th></tr></thead><tbody></tbody></table></div>
+<details><summary>Presentes reservados</summary><table id="g"><thead><tr><th>Item</th><th>Reservado por</th></tr></thead><tbody></tbody></table></details>
+<p class="muted" style="margin-top:20px">Os dados vêm direto da planilha. Para alterar uma resposta, edite na planilha. URL e chave ficam salvos só neste navegador.</p>
+</div>
+<script>
+const $=s=>document.querySelector(s); let ROWS=[];
+$('#url').value=localStorage.getItem('v4_url')||''; $('#tok').value=localStorage.getItem('v4_tok')||'';
+async function load(){
+  const url=$('#url').value.trim(), tok=$('#tok').value.trim(); if(!url||!tok) return alert('Informe URL e chave');
+  localStorage.setItem('v4_url',url); localStorage.setItem('v4_tok',tok);
+  $('#go').textContent='…';
+  try{ const j=await (await fetch(`${url}?action=list&chave=${encodeURIComponent(tok)}`)).json();
+    if(!j.ok) throw new Error(j.error); ROWS=j.rows; render(); gifts(j.gifts); $('#when').textContent='atualizado '+new Date().toLocaleTimeString('pt-BR');
+  }catch(e){ alert('Erro: '+e.message); } $('#go').textContent='Atualizar';
+}
+function render(){
+  const q=$('#q').value.toLowerCase(), so=$('#soSim').checked;
+  const rows=ROWS.filter(r=>(!q||String(r['Nome']).toLowerCase().includes(q))&&(!so||r['Presença']==='SIM'));
+  const sim=ROWS.filter(r=>r['Presença']==='SIM'), ad=sim.reduce((a,r)=>a+(+r['Adultos']||0),0), cr=sim.reduce((a,r)=>a+(+r['Crianças']||0),0);
+  const restr=sim.filter(r=>r['Restrição alimentar']).length;
+  $('#kpi').innerHTML=[['Famílias SIM',sim.length],['Adultos',ad],['Crianças',cr],['Pessoas',ad+cr],['Disseram NÃO',ROWS.length-sim.length],['Com restrição',restr]]
+    .map(([l,v])=>`<div><b>${v}</b><small class="px">${l.toUpperCase()}</small></div>`).join('');
+  $('#t tbody').innerHTML=rows.map(r=>`<tr class="${r['Presença']==='SIM'?'sim':'nao'}"><td><b>${r['Nome']}</b></td><td>${r['Presença']}</td><td>${r['Adultos']}</td><td>${r['Crianças']}</td><td>${r['Nomes das crianças']||''}</td><td>${r['Restrição alimentar']||''}</td><td>${r['Telefone']||''}</td><td>${r['Recado']||''}</td><td class="muted">${new Date(r['Data/Hora']).toLocaleString('pt-BR')}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">Nenhuma resposta ainda.</td></tr>';
+}
+function gifts(g){ $('#g tbody').innerHTML=(g||[]).map(x=>`<tr><td>${x.item}</td><td>${x.reservado?'✔ reservado':'—'}</td></tr>`).join(''); }
+$('#go').onclick=load; $('#q').oninput=render; $('#soSim').onchange=render;
+$('#csv').onclick=()=>{ if(!ROWS.length) return; const h=Object.keys(ROWS[0]); const csv=[h.join(';'),...ROWS.map(r=>h.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`).join(';'))].join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})); a.download='confirmacoes-vitor4.csv'; a.click(); };
+if($('#url').value&&$('#tok').value) load();
+</script>
+</body></html>

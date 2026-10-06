@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vitor faz 4 anos! 🎮</title>
+<meta name="description" content="Convite interativo da festa de 4 anos do Vitor — 24/10, 16h, em Contagem. Confirme sua presença!">
+<meta property="og:title" content="Vitor faz 4 anos! Você vem?">
+<meta property="og:description" content="Sábado 24/10, das 16h às 20h. Toque para abrir o convite e confirmar presença.">
+<meta property="og:image" content="https://xphillsa.github.io/vitor4anos/hero.jpg">
+<meta name="theme-color" content="#5c94fc">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%23fbd000%27/%3E%3Ctext x=%278%27 y=%2712%27 font-size=%2711%27 text-anchor=%27middle%27 font-family=%27monospace%27 font-weight=%27bold%27%3E4%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#5c94fc; --sky2:#9cc8ff; --grass:#2fa84f; --grass2:#1d7a37; --dirt:#9c5a2c; --brick:#c8623b; --brick2:#8a3d1f;
+  --red:#e52521; --yellow:#fbd000; --blue:#049cd8; --green:#43b047; --ink:#1b1b2f; --paper:#fff8e7; --white:#fff;
+  --shadow:0 6px 0 rgba(0,0,0,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--sky);color:var(--ink);overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.px{font-family:'Press Start 2P',monospace;line-height:1.6}
+button{font-family:inherit;cursor:pointer;border:0}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+/* ---------- CAPA ---------- */
+#cover{position:fixed;inset:0;z-index:50;background:linear-gradient(var(--sky) 0%,var(--sky2) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 16px 120px;overflow:hidden;transition:transform .7s cubic-bezier(.7,0,.3,1),opacity .7s}
+#cover.out{transform:translateY(-100%);opacity:0;pointer-events:none}
+.cloud{position:absolute;background:#fff;border-radius:0;box-shadow:var(--shadow);animation:drift linear infinite;opacity:.95}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff}
+.cloud{width:72px;height:28px}
+.cloud::before{width:28px;height:28px;left:12px;top:-20px}
+.cloud::after{width:20px;height:16px;left:42px;top:-12px}
+@keyframes drift{from{transform:translateX(110vw)}to{transform:translateX(-140px)}}
+.ground{position:absolute;left:0;right:0;bottom:0;height:88px;background:
+  repeating-linear-gradient(90deg,var(--brick) 0 28px,var(--brick2) 28px 30px),var(--brick);
+  background-size:30px 100%;border-top:10px solid var(--grass);box-shadow:inset 0 10px 0 var(--grass2)}
+.ground::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 18px,rgba(0,0,0,.18) 18px 20px)}
+.pipe{position:absolute;bottom:88px;width:64px;height:90px;background:linear-gradient(90deg,#2b8f3a,#5cd167 40%,#2b8f3a);border:4px solid #0d4d18;border-bottom:0}
+.pipe::before{content:"";position:absolute;left:-10px;right:-10px;top:-24px;height:26px;background:linear-gradient(90deg,#2b8f3a,#5cd167 40%,#2b8f3a);border:4px solid #0d4d18}
+.pipe.l{left:6%}.pipe.r{right:6%;height:60px}
+.block{position:absolute;width:44px;height:44px;background:var(--yellow);border:4px solid #8a5a00;box-shadow:inset -6px -6px 0 #d49a00;display:grid;place-items:center;color:#8a5a00;font-size:18px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+#cover h1{font-size:clamp(22px,6vw,42px);color:#fff;text-shadow:4px 4px 0 var(--red),8px 8px 0 rgba(0,0,0,.25);margin:18px 0 10px;z-index:2}
+#cover .sub{color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.35);font-size:clamp(11px,3vw,15px);z-index:2}
+.hello{background:var(--yellow);color:#5a3a00;padding:8px 14px;display:inline-block;font-size:clamp(10px,2.8vw,13px);box-shadow:var(--shadow);transform:rotate(-3deg);margin-bottom:8px;z-index:2}
+#start{margin-top:34px;background:var(--red);color:#fff;padding:18px 26px;font-size:clamp(12px,3.4vw,16px);box-shadow:0 8px 0 #8f1512;z-index:2;animation:blink 1.1s steps(2) infinite;position:relative}
+#start:active{transform:translateY(6px);box-shadow:0 2px 0 #8f1512}
+@keyframes blink{50%{filter:brightness(1.25)}}
+.coin{display:inline-block;width:16px;height:22px;background:var(--yellow);border:3px solid #a06d00;border-radius:50%;vertical-align:middle;animation:spin 1s linear infinite;margin-right:8px}
+@keyframes spin{50%{transform:scaleX(.15)}}
+
+/* ---------- PÁGINA ---------- */
+main{max-width:620px;margin:0 auto;padding:18px 16px 60px;position:relative}
+section{background:var(--paper);border:4px solid var(--ink);box-shadow:8px 8px 0 rgba(0,0,0,.3);padding:22px 18px;margin:26px 0;position:relative}
+section h2{font-size:clamp(13px,3.6vw,17px);color:var(--red);margin-bottom:16px;text-shadow:2px 2px 0 #ffd6d5}
+.tag{position:absolute;top:-16px;left:14px;background:var(--blue);color:#fff;padding:6px 10px;font-size:10px;box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.hero{border:8px solid #fff;outline:4px solid var(--ink);box-shadow:8px 8px 0 rgba(0,0,0,.3);transform:rotate(-1.5deg);margin:10px auto 26px;max-width:520px}
+.hero img{aspect-ratio:4/3;object-fit:cover;width:100%}
+.lead{font-size:17px;line-height:1.55;font-weight:600}
+.lead b{color:var(--red)}
+.ribbon{text-align:center;color:#fff;font-size:clamp(14px,4.5vw,22px);text-shadow:3px 3px 0 var(--ink);margin:8px 0 2px}
+.count{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.count div{background:var(--ink);color:var(--yellow);text-align:center;padding:12px 4px;font-size:clamp(14px,4vw,20px)}
+.count small{display:block;color:#fff;font-size:8px;margin-top:8px;letter-spacing:1px}
+.info{display:grid;gap:12px}
+.info .row{display:flex;gap:14px;align-items:flex-start;font-size:16px;font-weight:600}
+.info .ico{width:46px;height:46px;flex:none;display:grid;place-items:center;font-size:24px;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.info .row strong{display:block;font-size:11px;color:var(--blue);margin-bottom:3px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 10px;font-weight:800;font-size:15px;color:#fff;text-decoration:none;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);transition:transform .08s}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.waze{background:#33ccff;color:#06395a}.btn.maps{background:var(--green)}.btn.cal{background:var(--blue)}.btn.ics{background:#fff;color:var(--ink)}
+.btn.wa{background:#25d366;grid-column:1/-1}
+.btn.red{background:var(--red)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+/* form */
+form{display:grid;gap:14px}
+label{font-weight:800;font-size:13px;color:#444;display:grid;gap:6px}
+input,textarea,select{font:inherit;font-weight:600;padding:12px;border:3px solid var(--ink);background:#fff;width:100%;border-radius:0}
+input:focus,textarea:focus{outline:3px solid var(--yellow)}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.yn input{display:none}
+.yn span{display:block;text-align:center;padding:16px 8px;border:3px solid var(--ink);background:#fff;font-weight:800;font-size:15px;box-shadow:4px 4px 0 var(--ink);cursor:pointer}
+.yn input:checked+span{background:var(--green);color:#fff}
+.yn input[value="nao"]:checked+span{background:var(--red);color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qty{display:flex;border:3px solid var(--ink);background:#fff}
+.qty button{width:44px;font-size:22px;font-weight:800;background:var(--yellow)}
+.qty input{border:0;text-align:center;font-size:18px}
+.hide{display:none!important}
+#submit{background:var(--red);color:#fff;padding:18px;font-size:13px;box-shadow:0 6px 0 #8f1512;margin-top:4px}
+#submit:disabled{opacity:.6}
+.ok{text-align:center;padding:10px 0}
+.ok .big{font-size:48px;margin-bottom:10px}
+.ok h3{font-size:14px;color:var(--green);margin-bottom:12px}
+.note{font-size:13px;color:#666;margin-top:10px}
+
+/* presentes */
+.gifts{display:grid;gap:10px}
+.gift{display:flex;align-items:center;gap:12px;border:3px solid var(--ink);background:#fff;padding:10px 12px;box-shadow:4px 4px 0 var(--ink)}
+.gift .n{flex:1;font-weight:800;font-size:15px}
+.gift .n small{display:block;font-weight:600;color:#666;font-size:12px}
+.gift button{background:var(--yellow);padding:10px 12px;font-size:9px;border:3px solid var(--ink)}
+.gift.taken{opacity:.55}.gift.taken button{background:#ddd}
+.gift a{font-size:12px;color:var(--blue)}
+
+/* galeria */
+.gal{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px;-webkit-overflow-scrolling:touch}
+.gal img{flex:none;width:72%;aspect-ratio:3/4;object-fit:cover;scroll-snap-align:center;border:6px solid #fff;outline:3px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.3)}
+.gal img:nth-child(odd){transform:rotate(1.2deg)}.gal img:nth-child(even){transform:rotate(-1.2deg)}
+
+/* jogo */
+#game{display:block;width:100%;aspect-ratio:16/10;background:var(--sky2);border:4px solid var(--ink);image-rendering:pixelated;touch-action:manipulation}
+.score{display:flex;justify-content:space-between;font-size:11px;margin:10px 0 0;color:#333}
+#play{background:var(--green);color:#fff;padding:14px;font-size:11px;box-shadow:0 5px 0 #1d7a37;margin-top:12px;width:100%}
+
+#mute{position:fixed;right:12px;bottom:12px;z-index:40;width:48px;height:48px;background:var(--ink);color:#fff;font-size:20px;border:3px solid #fff;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shadow:2px 2px 0 rgba(0,0,0,.4)}
+.confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:60;animation:fall linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ CAPA ============ -->
+<div id="cover">
+  <i class="cloud" style="top:12%;animation-duration:38s"></i>
+  <i class="cloud" style="top:28%;animation-duration:52s;animation-delay:-20s;transform:scale(.7)"></i>
+  <i class="cloud" style="top:8%;animation-duration:44s;animation-delay:-35s"></i>
+  <i class="block" style="left:18%;top:36%">★</i>
+  <i class="block" style="right:20%;top:30%;animation-delay:.6s">4</i>
+  <div class="hello px" id="hello">OLÁ!</div>
+  <h1 class="px">VITOR<br>FAZ 4 ANOS!</h1>
+  <p class="sub px">UMA FESTA EM OUTRO NÍVEL</p>
+  <button id="start" class="px"><span class="coin"></span>PRESS START</button>
+  <i class="pipe l"></i><i class="pipe r"></i>
+  <div class="ground"></div>
+</div>
+
+<!-- ============ CONVITE ============ -->
+<main>
+  <p class="ribbon px">★ WORLD 4-1 ★</p>
+  <div class="hero"><img src="hero.jpg" alt="Vitor sorrindo"></div>
+
+  <section>
+    <span class="tag px">MENSAGEM DO VITOR</span>
+    <p class="lead" id="lead">Oi! Eu sou o <b>Vitor</b> e estou chegando no <b>nível 4</b>! Preparei uma tarde cheia de aventura, cano secreto, moedas pra pegar, muito bolo e muita brincadeira. Já tenho a fase pronta, só falta você pra completar a turma. Vem jogar comigo?</p>
+    <div class="count" id="count"><div>--<small>DIAS</small></div><div>--<small>HORAS</small></div><div>--<small>MIN</small></div><div>--<small>SEG</small></div></div>
+  </section>
+
+  <section>
+    <span class="tag px">ONDE E QUANDO</span>
+    <div class="info">
+      <div class="row"><div class="ico">📅</div><div><strong>DATA</strong>Sábado, 24 de outubro de 2026</div></div>
+      <div class="row"><div class="ico">⏰</div><div><strong>HORÁRIO</strong>Das 16h às 20h</div></div>
+      <div class="row"><div class="ico">📍</div><div><strong>LOCAL</strong>Rua São João Del Rey, 130<br>Bairro Industrial — Contagem/MG</div></div>
+    </div>
+    <div class="btns">
+      <a class="btn waze" id="waze" target="_blank" rel="noopener">🚗 Abrir no Waze</a>
+      <a class="btn maps" id="maps" target="_blank" rel="noopener">🗺️ Google Maps</a>
+      <a class="btn cal" id="gcal" target="_blank" rel="noopener">📆 Google Agenda</a>
+      <a class="btn ics" id="ics" download="aniversario-vitor-4-anos.ics">🍎 iPhone / Outlook</a>
+    </div>
+  </section>
+
+  <section id="rsvp">
+    <span class="tag px">CONFIRMAR PRESENÇA</span>
+    <h2 class="px">VOCÊ VEM?</h2>
+    <form id="form" novalidate>
+      <label>Seu nome <input name="nome" required placeholder="Ex.: Família Silva ou Ana e João" autocomplete="name"></label>
+      <label>WhatsApp (para a gente avisar novidades) <input name="telefone" type="tel" inputmode="tel" placeholder="(31) 9 9999-9999" autocomplete="tel"></label>
+      <div class="yn">
+        <label><input type="radio" name="presenca" value="sim" required><span>✅ SIM, vamos!</span></label>
+        <label><input type="radio" name="presenca" value="nao"><span>😢 Não vou conseguir</span></label>
+      </div>
+      <div id="detalhes" class="hide" style="display:grid;gap:14px">
+        <div class="two">
+          <label>Adultos<div class="qty"><button type="button" data-d="-1" data-t="adultos">−</button><input name="adultos" type="number" min="0" value="1" readonly><button type="button" data-d="1" data-t="adultos">+</button></div></label>
+          <label>Crianças<div class="qty"><button type="button" data-d="-1" data-t="criancas">−</button><input name="criancas" type="number" min="0" value="1" readonly><button type="button" data-d="1" data-t="criancas">+</button></div></label>
+        </div>
+        <label>Nome e idade das crianças <input name="nomes_criancas" placeholder="Ex.: Maria (4), Pedro (6)"></label>
+        <label>Alguma alergia ou restrição alimentar? <input name="restricao" placeholder="Ex.: alergia a amendoim, sem lactose"></label>
+      </div>
+      <label>Recado para o Vitor (opcional) <textarea name="mensagem" rows="2" placeholder="Ele vai adorar ler!"></textarea></label>
+      <button id="submit" class="px" type="submit">ENVIAR RESPOSTA ▶</button>
+      <p class="note">Por favor, confirme até <b>17 de outubro</b>. Pode responder de novo se mudar algo.</p>
+    </form>
+    <div id="done" class="ok hide">
+      <div class="big" id="doneEmoji">🎉</div>
+      <h3 class="px" id="doneTitle">RESPOSTA SALVA!</h3>
+      <p id="doneText" class="lead" style="font-size:15px"></p>
+      <div class="btns"><a class="btn wa" id="waShare" target="_blank" rel="noopener">💬 Avisar no WhatsApp</a></div>
+      <p class="note"><a href="#" id="again">Corrigir minha resposta</a></p>
+    </div>
+  </section>
+
+  <section id="giftsSec">
+    <span class="tag px">LISTA DE PRESENTES</span>
+    <h2 class="px">IDEIAS QUE O VITOR AMA</h2>
+    <p class="note" style="margin:0 0 14px">Presente é totalmente opcional! Se quiser dar, reserve uma ideia aqui para não repetir com outro convidado.</p>
+    <div class="gifts" id="gifts"><p class="note">Carregando lista…</p></div>
+  </section>
+
+  <section>
+    <span class="tag px">MINIGAME</span>
+    <h2 class="px">PEGUE AS MOEDAS!</h2>
+    <p class="note" style="margin:0 0 12px">Toque na tela (ou aperte espaço) para pular. Desvie dos canos e pegue moedas em 30 segundos.</p>
+    <canvas id="game" width="480" height="300"></canvas>
+    <div class="score px"><span>MOEDAS: <b id="sc">0</b></span><span>TEMPO: <b id="tm">30</b></span><span>RECORDE: <b id="best">0</b></span></div>
+    <button id="play" class="px">▶ JOGAR</button>
+  </section>
+
+  <section>
+    <span class="tag px">GALERIA</span>
+    <h2 class="px">O VITOR ATÉ AQUI</h2>
+    <div class="gal">
+      <img src="g1.jpg" alt="Vitor com a camisa do Brasil" loading="lazy">
+      <img src="g2.jpg" alt="Vitor de óculos escuros" loading="lazy">
+      <img src="g3.jpg" alt="Vitor explorando a caverna de capacete" loading="lazy">
+      <img src="g4.jpg" alt="Vitor fazendo pose" loading="lazy">
+      <img src="g5.jpg" alt="Vitor brincando na água" loading="lazy">
+      <img src="g6.jpg" alt="Vitor de bicicleta" loading="lazy">
+      <img src="g7.jpg" alt="Vitor no volante" loading="lazy">
+      <img src="g8.jpg" alt="Vitor na praia" loading="lazy">
+    </div>
+  </section>
+
+  <footer class="px">COM AMOR, PAPAI E MAMÃE ♥<br><br>FEITO COM CARINHO PARA O VITOR</footer>
+</main>
+<button id="mute" title="Som">🔊</button>
+
+<script>
+/* =================== CONFIG (edite aqui) =================== */
+const CFG = {
+  nome: 'Vitor',
+  inicio: '2026-10-24T16:00:00-03:00',
+  fim:    '2026-10-24T20:00:00-03:00',
+  endereco: 'Rua São João Del Rey, 130, Industrial, Contagem - MG',
+  // URL do Web App publicado no Google Apps Script (veja LEIA-ME.md). Enquanto vazio, a página funciona em modo demonstração.
+  scriptUrl: 'https://script.google.com/macros/s/AKfycbyxvUlmLbhNzfIMGU5Q6vVX07LvLVPpnxNyIRNxr1Ytq1cuwjBv41c_Ca943CQwsxZvrA/exec',
+  // WhatsApp do anfitrião para o botão "Avisar no WhatsApp" (só números, com DDI). Ex.: '5531999999999'
+  whatsapp: ''
+};
+/* ============================================================ */
+
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const convidado = (params.get('c') || '').replace(/[-_+]/g,' ').trim();
+if (convidado) {
+  $('#hello').textContent = 'OLÁ, ' + convidado.toUpperCase() + '!';
+  $('#form [name=nome]').value = convidado;
+}
+
+/* ---------- Áudio 8-bit original (WebAudio, sem samples) ---------- */
+let AC = null, muted = false;
+const N = {C4:261.6,D4:293.7,E4:329.6,F4:349.2,G4:392,A4:440,B4:493.9,C5:523.3,D5:587.3,E5:659.3,G5:784,A5:880,C6:1046.5};
+function ac(){ if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); } if(AC.state==='suspended') AC.resume(); return AC; }
+function tone(f, t0, dur, type='square', vol=.08){
+  if(muted) return; const a=ac(); const o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.value=f; g.gain.setValueAtTime(vol,t0); g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0+dur+.02);
+}
+function seq(notes, bpm=180, type='square'){ const a=ac(); let t=a.currentTime+.02; const step=60/bpm/2;
+  notes.forEach(n=>{ if(n) tone(N[n],t,step*.9,type); t+=step; }); }
+const SFX = {
+  start: ()=>seq(['E4','G4','C5','E5','G5',null,'C6','C6'],200),
+  coin:  ()=>{ const a=ac(); tone(N.B4,a.currentTime,.06,'square',.07); tone(N.E5,a.currentTime+.06,.18,'square',.07); },
+  jump:  ()=>{ const a=ac(); const o=a.createOscillator(), g=a.createGain(); if(muted) return; o.type='square';
+           o.frequency.setValueAtTime(220,a.currentTime); o.frequency.exponentialRampToValueAtTime(660,a.currentTime+.12);
+           g.gain.setValueAtTime(.06,a.currentTime); g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.15); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime+.16); },
+  hit:   ()=>{ const a=ac(); tone(150,a.currentTime,.25,'sawtooth',.08); },
+  win:   ()=>seq(['C4','E4','G4','C5',null,'G4','C5','E5',null,'C5','E5','G5','C6'],230),
+  sad:   ()=>seq(['E4','D4','C4',null,'B4','A4','G4'],140,'triangle'),
+  click: ()=>{ const a=ac(); tone(N.C5,a.currentTime,.05,'square',.05); }
+};
+$('#mute').onclick = ()=>{ muted=!muted; $('#mute').textContent = muted?'🔇':'🔊'; };
+
+/* ---------- Capa ---------- */
+$('#start').onclick = ()=>{ SFX.start(); $('#cover').classList.add('out'); setTimeout(()=>$('#cover').remove(),800); confetti(60); };
+
+/* ---------- Contagem regressiva ---------- */
+const alvo = new Date(CFG.inicio).getTime();
+function tick(){ let d = Math.max(0, alvo - Date.now());
+  const v=[Math.floor(d/864e5), Math.floor(d/36e5)%24, Math.floor(d/6e4)%60, Math.floor(d/1e3)%60];
+  const lab=['DIAS','HORAS','MIN','SEG'];
+  $('#count').innerHTML = v.map((x,i)=>`<div>${String(x).padStart(2,'0')}<small>${lab[i]}</small></div>`).join('');
+  if(d===0) $('#count').innerHTML='<div style="grid-column:1/-1">É HOJE! 🎉</div>'; }
+tick(); setInterval(tick,1000);
+
+/* ---------- Mapas e agenda ---------- */
+const enc = encodeURIComponent(CFG.endereco);
+$('#waze').href = `https://waze.com/ul?q=${enc}&navigate=yes`;
+$('#maps').href = `https://www.google.com/maps/dir/?api=1&destination=${enc}`;
+const fmt = d => new Date(d).toISOString().replace(/[-:]|\.\d{3}/g,'');
+const titulo = `Aniversário de 4 anos do ${CFG.nome}`;
+const desc = `Festa do ${CFG.nome}! Confirme presença no convite.`;
+$('#gcal').href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titulo)}&dates=${fmt(CFG.inicio)}/${fmt(CFG.fim)}&details=${encodeURIComponent(desc+' '+location.href)}&location=${enc}`;
+const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Convite Vitor//PT','BEGIN:VEVENT',`UID:vitor4-${Date.now()}@convite`,`DTSTAMP:${fmt(Date.now())}`,`DTSTART:${fmt(CFG.inicio)}`,`DTEND:${fmt(CFG.fim)}`,`SUMMARY:${titulo}`,`DESCRIPTION:${desc}`,`LOCATION:${CFG.endereco}`,'BEGIN:VALARM','TRIGGER:-PT3H','ACTION:DISPLAY','DESCRIPTION:Festa do Vitor hoje!','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+$('#ics').href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+
+/* ---------- RSVP ---------- */
+const form=$('#form');
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'){ $('#detalhes').classList.toggle('hide', e.target.value!=='sim'); SFX.click(); } });
+form.addEventListener('click', e=>{ const b=e.target.closest('[data-d]'); if(!b) return; const i=form[b.dataset.t]; i.value=Math.max(0, +i.value + +b.dataset.d); SFX.click(); });
+
+async function post(payload){
+  if(!CFG.scriptUrl){ await new Promise(r=>setTimeout(r,700)); return {ok:true, demo:true}; }
+  const r = await fetch(CFG.scriptUrl, {method:'POST', body: JSON.stringify(payload)});
+  return r.json();
+}
+form.onsubmit = async e=>{
+  e.preventDefault();
+  const fd = new FormData(form); const d = Object.fromEntries(fd.entries());
+  if(!d.nome.trim()){ form.nome.focus(); form.nome.style.outline='3px solid var(--red)'; return; }
+  if(!d.presenca){ alert('Marque SIM ou NÃO, por favor 🙂'); return; }
+  if(d.presenca==='nao'){ d.adultos=0; d.criancas=0; d.nomes_criancas=''; d.restricao=''; }
+  d.convidado_link = convidado; d.user_agent = navigator.userAgent.slice(0,80);
+  const btn=$('#submit'); btn.disabled=true; btn.textContent='SALVANDO…';
+  try{
+    const res = await post({action:'rsvp', ...d});
+    if(!res.ok) throw new Error(res.error||'erro');
+    localStorage.setItem('vitor4_rsvp', JSON.stringify(d));
+    showDone(d, res.demo);
+  }catch(err){
+    btn.disabled=false; btn.textContent='ENVIAR RESPOSTA ▶';
+    alert('Não consegui salvar agora. Tente de novo em instantes ou avise pelo WhatsApp. ('+err.message+')');
+  }
+};
+function showDone(d, demo){
+  form.classList.add('hide'); $('#done').classList.remove('hide');
+  const sim = d.presenca==='sim';
+  $('#doneEmoji').textContent = sim?'🎉':'💙';
+  $('#doneTitle').textContent = sim?'PRESENÇA CONFIRMADA!':'QUE PENA! FICA PRA PRÓXIMA';
+  $('#doneText').textContent = sim
+    ? `${d.nome}, o Vitor já está contando com ${d.adultos} adulto(s) e ${d.criancas} criança(s). Até dia 24!`
+    : `${d.nome}, obrigado por avisar. O Vitor manda um abraço!`
+    + (demo?' (modo demonstração: nada foi gravado — publique o Apps Script)':'');
+  const msg = sim ? `Oi! Confirmei presença na festa do Vitor (24/10, 16h): ${d.adultos} adulto(s) e ${d.criancas} criança(s). 🎉`
+                  : `Oi! Infelizmente não vou conseguir ir à festa do Vitor no dia 24/10. 💙`;
+  $('#waShare').href = `https://wa.me/${CFG.whatsapp}?text=${encodeURIComponent(msg)}`;
+  if(!CFG.whatsapp) $('#waShare').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  sim ? (SFX.win(), confetti(120)) : SFX.sad();
+  $('#rsvp').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('#again').onclick = e=>{ e.preventDefault(); $('#done').classList.add('hide'); form.classList.remove('hide'); $('#submit').disabled=false; $('#submit').textContent='ENVIAR RESPOSTA ▶'; };
+try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } } }catch(e){}
+
+/* ---------- Presentes ---------- */
+async function loadGifts(){
+  const box=$('#gifts');
+  if(!CFG.scriptUrl){ box.innerHTML='<p class="note">A lista aparece aqui depois que o Apps Script for publicado (aba <b>Presentes</b> da planilha).</p>'; return; }
+  try{
+    const r = await fetch(CFG.scriptUrl+'?action=gifts'); const j = await r.json();
+    if(!j.gifts || !j.gifts.length){ box.innerHTML='<p class="note">Nenhuma ideia cadastrada ainda.</p>'; return; }
+    box.innerHTML = j.gifts.map(g=>`<div class="gift ${g.reservado?'taken':''}" data-id="${g.id}">
+      <div class="n">${g.item}${g.obs?`<small>${g.obs}</small>`:''}${g.link?` <a href="${g.link}" target="_blank" rel="noopener">ver</a>`:''}</div>
+      <button class="px" ${g.reservado?'disabled':''}>${g.reservado?'RESERVADO':'RESERVAR'}</button></div>`).join('');
+  }catch(e){ box.innerHTML='<p class="note">Não consegui carregar a lista agora.</p>'; }
+}
+$('#gifts').addEventListener('click', async e=>{
+  const b=e.target.closest('button'); if(!b) return; const card=b.closest('.gift');
+  const quem = (form.nome.value||'').trim() || prompt('Seu nome, para reservar:'); if(!quem) return;
+  b.disabled=true; b.textContent='…';
+  try{ const res=await post({action:'gift', id:card.dataset.id, quem}); if(!res.ok) throw 0;
+    card.classList.add('taken'); b.textContent='RESERVADO'; SFX.coin(); }
+  catch(err){ b.disabled=false; b.textContent='RESERVAR'; alert('Alguém reservou antes ou houve um erro. Atualizando…'); loadGifts(); }
+});
+loadGifts();
+
+/* ---------- Confete ---------- */
+function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'];
+  for(let i=0;i<n;i++){ const c=document.createElement('i'); c.className='confetti';
+    c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%5]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.8}s`;
+    document.body.appendChild(c); setTimeout(()=>c.remove(),5000); } }
+
+/* ---------- Minigame: pegue as moedas ---------- */
+(function(){
+  const cv=$('#game'), x=cv.getContext('2d'); const W=480,H=300,G=240; // G = chão
+  let run=false, t0, score=0, best=+localStorage.getItem('vitor4_best')||0, objs=[], p, speed, last, spawn;
+  $('#best').textContent=best;
+  const P = {x:70,y:G,w:28,h:40,vy:0,on:true};
+  function reset(){ score=0; objs=[]; speed=3.2; spawn=70; Object.assign(P,{y:G,vy:0,on:true}); $('#sc').textContent=0; $('#tm').textContent=30; }
+  function jump(){ if(!run) return; if(P.on){ P.vy=-11.5; P.on=false; SFX.jump(); } }
+  cv.addEventListener('pointerdown', e=>{ e.preventDefault(); jump(); });
+  addEventListener('keydown', e=>{ if(e.code==='Space' && run){ e.preventDefault(); jump(); } });
+  $('#play').onclick = ()=>{ if(run) return; ac(); reset(); run=true; t0=last=performance.now(); $('#play').textContent='JOGANDO…'; requestAnimationFrame(loop); };
+
+  function drawKid(px,py){ // personagem original: menino de cabelo escuro e camisa verde
+    x.fillStyle='#2b1d12'; x.fillRect(px+4,py,20,8);            // cabelo
+    x.fillStyle='#f1c9a5'; x.fillRect(px+6,py+8,16,10);         // rosto
+    x.fillStyle='#1b1b2f'; x.fillRect(px+10,py+11,3,3); x.fillRect(px+17,py+11,3,3); // olhos
+    x.fillStyle='#43b047'; x.fillRect(px+2,py+18,24,14);        // camisa
+    x.fillStyle='#2f5fa8'; x.fillRect(px+4,py+32,8,8); x.fillRect(px+16,py+32,8,8); // calça
+    x.fillStyle='#8a3d1f'; x.fillRect(px+2,py+38,10,3); x.fillRect(px+16,py+38,10,3); // tênis
+  }
+  function drawPipe(o){ x.fillStyle='#0d4d18'; x.fillRect(o.x-2,o.y-2,o.w+4,o.h+2); x.fillStyle='#43b047'; x.fillRect(o.x,o.y,o.w,o.h);
+    x.fillStyle='#5cd167'; x.fillRect(o.x+4,o.y,6,o.h); x.fillStyle='#0d4d18'; x.fillRect(o.x-6,o.y-2,o.w+12,12); x.fillStyle='#43b047'; x.fillRect(o.x-4,o.y,o.w+8,8); }
+  function drawCoin(o){ x.fillStyle='#a06d00'; x.beginPath(); x.ellipse(o.x+10,o.y+12,10,12,0,0,7); x.fill(); x.fillStyle='#fbd000'; x.beginPath(); x.ellipse(o.x+10,o.y+12,7,9,0,0,7); x.fill(); }
+  function loop(now){
+    if(!run) return; const dt=Math.min(32, now-last)/16.7; last=now;
+    const left = Math.max(0, 30 - (now-t0)/1000); $('#tm').textContent=Math.ceil(left);
+    if(left<=0){ end(); return; }
+    speed += .0015*dt; spawn -= dt;
+    if(spawn<=0){ const coin=Math.random()<.65;
+      objs.push(coin? {t:'c',x:W+20,y:G-40-Math.random()*110,w:20,h:24} : {t:'p',x:W+20,y:G-30-Math.floor(Math.random()*2)*20,w:34,h:0});
+      objs.forEach(o=>{ if(o.t==='p') o.h=G+40-o.y; }); spawn = 55 + Math.random()*50; }
+    P.vy += .55*dt; P.y += P.vy*dt; if(P.y>=G){ P.y=G; P.vy=0; P.on=true; }
+    objs.forEach(o=>o.x-=speed*dt); objs=objs.filter(o=>o.x>-60);
+    // colisões
+    for(const o of objs){ if(o.hit) continue;
+      const hit = P.x<o.x+o.w && P.x+P.w>o.x && P.y<o.y+o.h && P.y+P.h>o.y;
+      if(hit){ if(o.t==='c'){ o.hit=true; score++; $('#sc').textContent=score; SFX.coin(); } else { SFX.hit(); end(); return; } } }
+    // desenho
+    x.fillStyle='#9cc8ff'; x.fillRect(0,0,W,H);
+    x.fillStyle='#fff'; [[60,50],[220,30],[380,70]].forEach(([cx,cy])=>{ const off=((now/40)+cx)%(W+80)-40; x.fillRect(W-off,cy,50,14); x.fillRect(W-off+10,cy-10,30,10); });
+    x.fillStyle='#2fa84f'; x.fillRect(0,G+40,W,8); x.fillStyle='#9c5a2c'; x.fillRect(0,G+48,W,H);
+    x.fillStyle='rgba(0,0,0,.15)'; for(let i=0;i<W;i+=30) x.fillRect(i,G+48,2,H);
+    objs.forEach(o=>{ if(o.hit) return; o.t==='c'?drawCoin(o):drawPipe(o); });
+    drawKid(P.x,P.y);
+    requestAnimationFrame(loop);
+  }
+  function end(){ run=false; $('#play').textContent='▶ JOGAR DE NOVO';
+    if(score>best){ best=score; localStorage.setItem('vitor4_best',best); $('#best').textContent=best; SFX.win(); confetti(40); }
+    x.fillStyle='rgba(27,27,47,.75)'; x.fillRect(0,0,W,H); x.fillStyle='#fbd000'; x.font='20px "Press Start 2P"'; x.textAlign='center';
+    x.fillText('FIM!',W/2,H/2-30); x.fillStyle='#fff'; x.font='14px "Press Start 2P"'; x.fillText(`${score} MOEDA${score===1?'':'S'}`,W/2,H/2+10);
+    x.font='9px "Press Start 2P"'; x.fillText('agora confirme presença ali em cima!',W/2,H/2+45); }
+  // tela inicial
+  x.fillStyle='#9cc8ff'; x.fillRect(0,0,W,H); x.fillStyle='#2fa84f'; x.fillRect(0,G+40,W,8); x.fillStyle='#9c5a2c'; x.fillRect(0,G+48,W,H); drawKid(P.x,P.y);
+  x.fillStyle='#1b1b2f'; x.font='12px "Press Start 2P"'; x.textAlign='center'; x.fillText('TOQUE EM JOGAR',W/2,110);
+})();
+</script>
+</body>
+</html>
