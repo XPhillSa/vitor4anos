@@ -150,7 +150,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
 
   <section>
     <span class="tag px">MENSAGEM DO VITOR</span>
-    <p class="lead" id="lead">Oi! Eu sou o <b>Vitor</b> e estou chegando no <b>nível 4</b>! Preparei uma tarde cheia de aventura, cano secreto, moedas pra pegar, muito bolo e muita brincadeira. Já tenho a fase pronta, só falta você pra completar a turma. Vem jogar comigo?</p>
+    <p class="lead" id="lead">Oi! Eu sou o <b>Vitor</b> e estou chegando no <b>nível 4</b>! Vai ter uma tarde de muita brincadeira, bolo, amigos e um monte de alegria. A fase já está pronta, só falta você pra completar a turma. Vem comemorar comigo?</p>
     <div class="count" id="count"><div>--<small>DIAS</small></div><div>--<small>HORAS</small></div><div>--<small>MIN</small></div><div>--<small>SEG</small></div></div>
   </section>
 
@@ -210,15 +210,29 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
   <section>
     <span class="tag px">MINIGAME</span>
     <h2 class="px">PEGUE AS MOEDAS!</h2>
-    <p class="note" style="margin:0 0 12px">Toque na tela (ou aperte espaço) para pular. Desvie dos canos e pegue moedas em 30 segundos.</p>
+    <p class="note" style="margin:0 0 12px">Toque na tela para pular (segure para pular mais alto). Suba nos canos, pegue as moedas e chegue na bandeira! Você tem 3 vidas.</p>
     <canvas id="game" width="480" height="300"></canvas>
-    <div class="score px"><span>MOEDAS: <b id="sc">0</b></span><span>TEMPO: <b id="tm">30</b></span><span>RECORDE: <b id="best">0</b></span></div>
+    <div class="score px"><span>🪙 <b id="sc">0</b></span><span>❤️ <b id="lives">3</b></span><span>RECORDE: <b id="best">0</b></span></div>
     <button id="play" class="px">▶ JOGAR</button>
   </section>
 
   <section>
+    <span class="tag px">LINHA DO TEMPO</span>
+    <h2 class="px">O VITOR CRESCENDO</h2>
+    <p class="note" style="margin:0 0 12px">Do colo até o nível 4 — o grande orgulho do papai e da mamãe.</p>
+    <div class="gal">
+      <img src="t1.jpg" alt="Vitor recém-nascido" loading="lazy">
+      <img src="t2.jpg" alt="Vitor bebê no cadeirão" loading="lazy">
+      <img src="t3.jpg" alt="Vitor dando os primeiros passos" loading="lazy">
+      <img src="t4.jpg" alt="Vitor sentado na grama" loading="lazy">
+      <img src="t5.jpg" alt="Vitor pequeno brincando" loading="lazy">
+      <img src="t6.jpg" alt="Vitor de pijama" loading="lazy">
+    </div>
+  </section>
+
+  <section>
     <span class="tag px">GALERIA</span>
-    <h2 class="px">O VITOR ATÉ AQUI</h2>
+    <h2 class="px">O VITOR HOJE</h2>
     <div class="gal">
       <img src="g1.jpg" alt="Vitor com a camisa do Brasil" loading="lazy">
       <img src="g2.jpg" alt="Vitor de óculos escuros" loading="lazy">
@@ -379,60 +393,97 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
     c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%5]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.8}s`;
     document.body.appendChild(c); setTimeout(()=>c.remove(),5000); } }
 
-/* ---------- Minigame: pegue as moedas ---------- */
+/* ---------- Minigame: fase do Vitor (platformer original) ---------- */
 (function(){
-  const cv=$('#game'), x=cv.getContext('2d'); const W=480,H=300,G=240; // G = chão
-  let run=false, t0, score=0, best=+localStorage.getItem('vitor4_best')||0, objs=[], p, speed, last, spawn;
+  const cv=$('#game'), x=cv.getContext('2d'); const W=480,H=300,G=250; // G = topo do chão
+  const LEVEL_LEN=3400; // comprimento da fase em px
+  let run=false, best=+localStorage.getItem('vitor4_best')||0, cam=0, score=0, lives=3, inv=0, t, last, hold=false, won=false;
   $('#best').textContent=best;
-  const P = {x:70,y:G,w:28,h:40,vy:0,on:true};
-  function reset(){ score=0; objs=[]; speed=3.2; spawn=70; Object.assign(P,{y:G,vy:0,on:true}); $('#sc').textContent=0; $('#tm').textContent=30; }
-  function jump(){ if(!run) return; if(P.on){ P.vy=-11.5; P.on=false; SFX.jump(); } }
-  cv.addEventListener('pointerdown', e=>{ e.preventDefault(); jump(); });
-  addEventListener('keydown', e=>{ if(e.code==='Space' && run){ e.preventDefault(); jump(); } });
-  $('#play').onclick = ()=>{ if(run) return; ac(); reset(); run=true; t0=last=performance.now(); $('#play').textContent='JOGANDO…'; requestAnimationFrame(loop); };
-
-  function drawKid(px,py){ // personagem original: menino de cabelo escuro e camisa verde
-    x.fillStyle='#2b1d12'; x.fillRect(px+4,py,20,8);            // cabelo
-    x.fillStyle='#f1c9a5'; x.fillRect(px+6,py+8,16,10);         // rosto
-    x.fillStyle='#1b1b2f'; x.fillRect(px+10,py+11,3,3); x.fillRect(px+17,py+11,3,3); // olhos
-    x.fillStyle='#43b047'; x.fillRect(px+2,py+18,24,14);        // camisa
-    x.fillStyle='#2f5fa8'; x.fillRect(px+4,py+32,8,8); x.fillRect(px+16,py+32,8,8); // calça
-    x.fillStyle='#8a3d1f'; x.fillRect(px+2,py+38,10,3); x.fillRect(px+16,py+38,10,3); // tênis
+  const P={x:60,y:G-40,w:22,h:40,vx:0,vy:0,on:false};
+  let pipes=[], coins=[], blocks=[], flag;
+  function build(){
+    pipes=[]; coins=[]; blocks=[];
+    // canos: [x, altura]. Altura máxima 70 (pulo chega a ~130).
+    [[380,40],[640,60],[900,40],[1180,70],[1420,40],[1560,40],[1860,60],[2160,70],[2480,40],[2740,60],[3000,50]].forEach(([px,h])=>pipes.push({x:px,y:G-h,w:40,h}));
+    // blocos flutuantes: [x,y] (y = topo). Dá para subir e pegar moedas em cima.
+    [[520,G-95],[560,G-95],[1040,G-110],[1080,G-110],[1300,G-90],[1700,G-100],[1740,G-100],[2040,G-90],[2340,G-110],[2380,G-110],[2620,G-95],[2880,G-100]].forEach(([bx,by])=>blocks.push({x:bx,y:by,w:40,h:24}));
+    // moedas: fileiras baixas no chão, outras em cima dos blocos/canos
+    const add=(cx,cy)=>coins.push({x:cx,y:cy,w:18,h:22,got:false});
+    for(let i=0;i<5;i++) add(200+i*30,G-60);
+    [[520,G-130],[560,G-130],[720,G-70],[760,G-70],[1040,G-145],[1080,G-145],[1300,G-125],[1700,G-135],[1740,G-135],[2040,G-125],[2340,G-145],[2380,G-145],[2620,G-130],[2880,G-135]].forEach(([cx,cy])=>add(cx,cy));
+    for(let i=0;i<5;i++) add(1960+i*30,G-60);
+    for(let i=0;i<6;i++) add(3080+i*30,G-60-(i%2)*30);
+    pipes.forEach(p=>add(p.x+11,p.y-34));
+    flag={x:LEVEL_LEN-120,y:G-150,w:8,h:150};
   }
-  function drawPipe(o){ x.fillStyle='#0d4d18'; x.fillRect(o.x-2,o.y-2,o.w+4,o.h+2); x.fillStyle='#43b047'; x.fillRect(o.x,o.y,o.w,o.h);
-    x.fillStyle='#5cd167'; x.fillRect(o.x+4,o.y,6,o.h); x.fillStyle='#0d4d18'; x.fillRect(o.x-6,o.y-2,o.w+12,12); x.fillStyle='#43b047'; x.fillRect(o.x-4,o.y,o.w+8,8); }
-  function drawCoin(o){ x.fillStyle='#a06d00'; x.beginPath(); x.ellipse(o.x+10,o.y+12,10,12,0,0,7); x.fill(); x.fillStyle='#fbd000'; x.beginPath(); x.ellipse(o.x+10,o.y+12,7,9,0,0,7); x.fill(); }
+  function reset(){ build(); cam=0; score=0; lives=3; inv=0; won=false; Object.assign(P,{x:60,y:G-40,vx:0,vy:0,on:false}); $('#sc').textContent=0; $('#lives').textContent=3; }
+  function press(e){ if(e.cancelable) e.preventDefault(); hold=true; if(run && P.on){ P.vy=-9.5; P.on=false; SFX.jump(); } }
+  function release(){ hold=false; }
+  cv.addEventListener('pointerdown',press); cv.addEventListener('pointerup',release); cv.addEventListener('pointercancel',release);
+  addEventListener('keydown',e=>{ if(e.code==='Space'&&run){ e.preventDefault(); if(!hold) press(e); } });
+  addEventListener('keyup',e=>{ if(e.code==='Space') release(); });
+  $('#play').onclick=()=>{ if(run) return; ac(); reset(); run=true; last=performance.now(); $('#play').textContent='JOGANDO…'; requestAnimationFrame(loop); };
+
+  function solids(){ return pipes.concat(blocks); }
+  window.__g={P, get pipes(){return pipes}, get run(){return run}};
   function loop(now){
-    if(!run) return; const dt=Math.min(32, now-last)/16.7; last=now;
-    const left = Math.max(0, 30 - (now-t0)/1000); $('#tm').textContent=Math.ceil(left);
-    if(left<=0){ end(); return; }
-    speed += .0015*dt; spawn -= dt;
-    if(spawn<=0){ const coin=Math.random()<.65;
-      objs.push(coin? {t:'c',x:W+20,y:G-40-Math.random()*110,w:20,h:24} : {t:'p',x:W+20,y:G-30-Math.floor(Math.random()*2)*20,w:34,h:0});
-      objs.forEach(o=>{ if(o.t==='p') o.h=G+40-o.y; }); spawn = 55 + Math.random()*50; }
-    P.vy += .55*dt; P.y += P.vy*dt; if(P.y>=G){ P.y=G; P.vy=0; P.on=true; }
-    objs.forEach(o=>o.x-=speed*dt); objs=objs.filter(o=>o.x>-60);
-    // colisões
-    for(const o of objs){ if(o.hit) continue;
-      const hit = P.x<o.x+o.w && P.x+P.w>o.x && P.y<o.y+o.h && P.y+P.h>o.y;
-      if(hit){ if(o.t==='c'){ o.hit=true; score++; $('#sc').textContent=score; SFX.coin(); } else { SFX.hit(); end(); return; } } }
-    // desenho
-    x.fillStyle='#9cc8ff'; x.fillRect(0,0,W,H);
-    x.fillStyle='#fff'; [[60,50],[220,30],[380,70]].forEach(([cx,cy])=>{ const off=((now/40)+cx)%(W+80)-40; x.fillRect(W-off,cy,50,14); x.fillRect(W-off+10,cy-10,30,10); });
-    x.fillStyle='#2fa84f'; x.fillRect(0,G+40,W,8); x.fillStyle='#9c5a2c'; x.fillRect(0,G+48,W,H);
-    x.fillStyle='rgba(0,0,0,.15)'; for(let i=0;i<W;i+=30) x.fillRect(i,G+48,2,H);
-    objs.forEach(o=>{ if(o.hit) return; o.t==='c'?drawCoin(o):drawPipe(o); });
-    drawKid(P.x,P.y);
+    if(!run) return; const dt=Math.min(32,now-last)/16.7; last=now;
+    // física
+    P.vx=2.7; // corre sozinho, igual "auto-runner"
+    if(hold && P.vy<0) P.vy-=0.22*dt; // segurar = pulo mais alto
+    P.vy+=0.5*dt; if(P.vy>10) P.vy=10;
+    // horizontal
+    P.x+=P.vx*dt;
+    if(inv<=0) for(const s of solids()){ if(overlap(P,s) && P.y+P.h>s.y+10 && P.y<s.y+s.h-6){ // bateu de lado (tolerância para pousar/raspar): empurra para trás, perde vida
+        P.x=s.x-P.w-1; hurt(); if(!run) return; } }
+    // vertical
+    P.y+=P.vy*dt; P.on=false;
+    if(P.y+P.h>=G){ P.y=G-P.h; P.vy=0; P.on=true; }
+    for(const s of solids()){ if(overlap(P,s)){
+        if(P.vy>0 && P.y+P.h-P.vy*dt<=s.y+1){ P.y=s.y-P.h; P.vy=0; P.on=true; }      // pousou em cima
+        else if(P.vy<0){ P.y=s.y+s.h; P.vy=0; }                                        // bateu a cabeça
+      } }
+    if(inv>0){ inv-=dt; for(const s of solids()){ if(overlap(P,s) && P.y+P.h>s.y+10) P.y=s.y-P.h; } } // invencível atravessa por cima
+    // moedas (caixa generosa)
+    for(const c of coins){ if(!c.got && overlap({x:P.x-4,y:P.y-4,w:P.w+8,h:P.h+8},c)){ c.got=true; score++; $('#sc').textContent=score; SFX.coin(); } }
+    // bandeira
+    if(P.x+P.w>flag.x){ won=true; end(); return; }
+    cam=Math.max(0,Math.min(P.x-140,LEVEL_LEN-W));
+    draw(now);
     requestAnimationFrame(loop);
   }
-  function end(){ run=false; $('#play').textContent='▶ JOGAR DE NOVO';
-    if(score>best){ best=score; localStorage.setItem('vitor4_best',best); $('#best').textContent=best; SFX.win(); confetti(40); }
+  function overlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+  function hurt(){ lives--; $('#lives').textContent=lives; inv=90; SFX.hit(); P.vy=-6; if(lives<=0){ end(); } }
+  function drawKid(px,py){ if(inv>0 && Math.floor(inv/5)%2) return; // pisca quando invencível
+    x.fillStyle='#2b1d12'; x.fillRect(px+1,py,20,8); x.fillStyle='#f1c9a5'; x.fillRect(px+3,py+8,16,10);
+    x.fillStyle='#1b1b2f'; x.fillRect(px+7,py+11,3,3); x.fillRect(px+14,py+11,3,3);
+    x.fillStyle='#43b047'; x.fillRect(px-1,py+18,24,14); x.fillStyle='#2f5fa8'; x.fillRect(px+1,py+32,8,8); x.fillRect(px+13,py+32,8,8);
+    x.fillStyle='#8a3d1f'; x.fillRect(px-1,py+38,10,3); x.fillRect(px+13,py+38,10,3); }
+  function drawPipe(o){ const sx=o.x-cam; x.fillStyle='#0d4d18'; x.fillRect(sx-2,o.y,o.w+4,o.h); x.fillStyle='#43b047'; x.fillRect(sx,o.y+2,o.w,o.h); x.fillStyle='#5cd167'; x.fillRect(sx+5,o.y+2,6,o.h);
+    x.fillStyle='#0d4d18'; x.fillRect(sx-6,o.y-2,o.w+12,12); x.fillStyle='#43b047'; x.fillRect(sx-4,o.y,o.w+8,8); }
+  function drawBlock(o){ const sx=o.x-cam; x.fillStyle='#8a3d1f'; x.fillRect(sx,o.y,o.w,o.h); x.fillStyle='#c8623b'; x.fillRect(sx+2,o.y+2,o.w-4,o.h-4); x.fillStyle='#8a3d1f'; x.fillRect(sx,o.y+11,o.w,2); x.fillRect(sx+19,o.y,2,11); x.fillRect(sx+9,o.y+13,2,11); x.fillRect(sx+29,o.y+13,2,11); }
+  function drawCoin(o){ const sx=o.x-cam; x.fillStyle='#a06d00'; x.beginPath(); x.ellipse(sx+9,o.y+11,9,11,0,0,7); x.fill(); x.fillStyle='#fbd000'; x.beginPath(); x.ellipse(sx+9,o.y+11,6,8,0,0,7); x.fill(); }
+  function draw(now){
+    x.fillStyle='#9cc8ff'; x.fillRect(0,0,W,H);
+    x.fillStyle='#fff'; [[60,50],[220,30],[380,70],[560,40]].forEach(([cx,cy])=>{ const sx=((cx-cam*0.3)%(W+100)+W+100)%(W+100)-50; x.fillRect(sx,cy,50,14); x.fillRect(sx+10,cy-10,30,10); });
+    x.fillStyle='#7fcf6b'; for(let i=-1;i<4;i++){ const hx=((i*300-cam*0.5)%(1200)+1200)%1200-300; x.beginPath(); x.ellipse(hx,G,120,60,0,Math.PI,0); x.fill(); }
+    x.fillStyle='#2fa84f'; x.fillRect(0,G,W,8); x.fillStyle='#9c5a2c'; x.fillRect(0,G+8,W,H);
+    x.fillStyle='rgba(0,0,0,.15)'; for(let i=-(cam%30);i<W;i+=30) x.fillRect(i,G+8,2,H);
+    blocks.forEach(drawBlock); pipes.forEach(drawPipe); coins.forEach(c=>{ if(!c.got) drawCoin(c); });
+    const fx=flag.x-cam; x.fillStyle='#ddd'; x.fillRect(fx,flag.y,6,flag.h); x.fillStyle='#e52521'; x.fillRect(fx+6,flag.y+4,34,22); x.fillStyle='#fbd000'; x.font='12px "Press Start 2P"'; x.fillText('4',fx+15,flag.y+21);
+    drawKid(P.x-cam,P.y);
+    x.fillStyle='#1b1b2f'; x.font='9px "Press Start 2P"'; x.textAlign='left'; x.fillText('🪙 '+score+'   ❤️ '+lives,10,20); x.textAlign='center';
+  }
+  function end(){ run=false; hold=false; $('#play').textContent='▶ JOGAR DE NOVO';
+    const total=won?score+10:score; if(total>best){ best=total; localStorage.setItem('vitor4_best',best); $('#best').textContent=best; }
+    if(won){ SFX.win(); confetti(60); } else SFX.sad();
+    draw(performance.now());
     x.fillStyle='rgba(27,27,47,.75)'; x.fillRect(0,0,W,H); x.fillStyle='#fbd000'; x.font='20px "Press Start 2P"'; x.textAlign='center';
-    x.fillText('FIM!',W/2,H/2-30); x.fillStyle='#fff'; x.font='14px "Press Start 2P"'; x.fillText(`${score} MOEDA${score===1?'':'S'}`,W/2,H/2+10);
-    x.font='9px "Press Start 2P"'; x.fillText('agora confirme presença ali em cima!',W/2,H/2+45); }
+    x.fillText(won?'FASE COMPLETA!':'FIM!',W/2,H/2-30); x.fillStyle='#fff'; x.font='12px "Press Start 2P"';
+    x.fillText(`${score} MOEDA${score===1?'':'S'}`+(won?' +10 BÔNUS':''),W/2,H/2+10);
+    x.font='8px "Press Start 2P"'; x.fillText(won?'o Vitor te espera na festa!':'tenta de novo! segure para pular alto',W/2,H/2+45); }
   // tela inicial
-  x.fillStyle='#9cc8ff'; x.fillRect(0,0,W,H); x.fillStyle='#2fa84f'; x.fillRect(0,G+40,W,8); x.fillStyle='#9c5a2c'; x.fillRect(0,G+48,W,H); drawKid(P.x,P.y);
-  x.fillStyle='#1b1b2f'; x.font='12px "Press Start 2P"'; x.textAlign='center'; x.fillText('TOQUE EM JOGAR',W/2,110);
+  build(); draw(0); x.fillStyle='#1b1b2f'; x.font='12px "Press Start 2P"'; x.textAlign='center'; x.fillText('TOQUE EM JOGAR',W/2,100);
 })();
 </script>
 </body>
