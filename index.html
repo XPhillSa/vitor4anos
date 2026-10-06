@@ -107,7 +107,13 @@ input:focus,textarea:focus{outline:3px solid var(--yellow)}
 .gift .n small{display:block;font-weight:600;color:#666;font-size:12px}
 .gift button{background:var(--yellow);padding:10px 12px;font-size:9px;border:3px solid var(--ink)}
 .gift.taken{opacity:.55}.gift.taken button{background:#ddd}
-.gift a{font-size:12px;color:var(--blue)}
+.gift{flex-wrap:wrap}.gift a{display:block;font-size:12px;color:var(--blue);margin-top:4px}
+.gift.taken{opacity:.55}.gift.mine{background:#eaffea;border-color:var(--green)}
+.gact{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.gst{font-size:12px;font-weight:800;color:#666}.gst.me{color:var(--green)}
+.lnk{background:none;font-size:12px;font-weight:800;color:var(--blue);text-decoration:underline;padding:0}
+.gform{display:flex;gap:6px;width:100%;align-items:center}.gform input{flex:1;padding:8px}.gform .px{background:var(--green);color:#fff;padding:10px;font-size:9px;border:3px solid var(--ink)}
+#toast{position:fixed;left:50%;bottom:76px;transform:translate(-50%,40px);opacity:0;background:var(--ink);color:#fff;font-weight:800;padding:12px 16px;border:3px solid var(--yellow);max-width:min(92vw,420px);text-align:center;z-index:70;transition:.3s;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
 
 /* galeria */
 .gal{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 14px;-webkit-overflow-scrolling:touch}
@@ -175,6 +181,13 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
     </div>
   </section>
 
+  <section>
+    <span class="tag px">O CENÁRIO DA FESTA</span>
+    <h2 class="px">VAI SER ASSIM!</h2>
+    <img src="painel.jpg" alt="Painel de decoração da festa" style="width:100%;border:4px solid var(--ink);background:#fff">
+    <p class="note">O painel que vai estar esperando a turma no dia 24.</p>
+  </section>
+
   <section id="rsvp">
     <span class="tag px">CONFIRMAR PRESENÇA</span>
     <h2 class="px">VOCÊ VEM?</h2>
@@ -209,7 +222,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
   <section id="giftsSec">
     <span class="tag px">LISTA DE PRESENTES</span>
     <h2 class="px">IDEIAS QUE O VITOR AMA</h2>
-    <p class="note" style="margin:0 0 14px">Presente é totalmente opcional! Se quiser dar, reserve uma ideia aqui para não repetir com outro convidado.</p>
+    <p class="note" style="margin:0 0 14px">Presente é totalmente opcional! Se quiser levar algo, toque em <b>RESERVAR</b> numa ideia e confirme seu nome: ela fica marcada para ninguém repetir. A compra é por sua conta, onde preferir. Mudou de ideia? É só tocar em <b>desfazer</b>.</p>
     <div class="gifts" id="gifts"><p class="note">Carregando lista…</p></div>
   </section>
 
@@ -284,6 +297,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
   <footer class="px">COM AMOR, PAPAI E MAMÃE ♥<br><br>FEITO COM CARINHO PARA O VITOR</footer>
 </main>
 <button id="mute" title="Som">🔊</button>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* =================== CONFIG (edite aqui) =================== */
@@ -402,24 +416,40 @@ $('#again').onclick = e=>{ e.preventDefault(); $('#done').classList.add('hide');
 try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } } }catch(e){}
 
 /* ---------- Presentes ---------- */
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const myGifts=()=>{ try{ return JSON.parse(localStorage.getItem('vitor4_gifts')||'{}'); }catch(e){ return {}; } };
+const setMyGift=(id,quem)=>{ try{ const m=myGifts(); if(quem) m[id]=quem; else delete m[id]; localStorage.setItem('vitor4_gifts',JSON.stringify(m)); }catch(e){} };
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),4000); }
 async function loadGifts(){
   const box=$('#gifts');
-  if(!CFG.scriptUrl){ box.innerHTML='<p class="note">A lista aparece aqui depois que o Apps Script for publicado (aba <b>Presentes</b> da planilha).</p>'; return; }
+  if(!CFG.scriptUrl){ box.innerHTML='<p class="note">A lista aparece aqui depois que o Apps Script for publicado.</p>'; return; }
   try{
-    const r = await fetch(CFG.scriptUrl+'?action=gifts'); const j = await r.json();
-    if(!j.gifts || !j.gifts.length){ box.innerHTML='<p class="note">Nenhuma ideia cadastrada ainda.</p>'; return; }
-    box.innerHTML = j.gifts.map(g=>`<div class="gift ${g.reservado?'taken':''}" data-id="${g.id}">
-      <div class="n">${g.item}${g.obs?`<small>${g.obs}</small>`:''}${g.link?` <a href="${g.link}" target="_blank" rel="noopener">ver</a>`:''}</div>
-      <button class="px" ${g.reservado?'disabled':''}>${g.reservado?'RESERVADO':'RESERVAR'}</button></div>`).join('');
-  }catch(e){ box.innerHTML='<p class="note">Não consegui carregar a lista agora.</p>'; }
+    const j = await (await fetch(CFG.scriptUrl+'?action=gifts')).json(); const mine=myGifts();
+    if(!j.gifts || !j.gifts.length){ box.innerHTML='<p class="note">A lista de ideias ainda está sendo montada. Volte daqui a pouco!</p>'; return; }
+    const livres=j.gifts.filter(g=>!g.reservado).length;
+    box.innerHTML = `<p class="note" style="margin:0">${livres} de ${j.gifts.length} ideias ainda livres</p>` + j.gifts.map(g=>{ const meu=mine[g.id];
+      const st = g.reservado ? (meu ? `<span class="gst me">✔ Reservado por você</span><button class="lnk" data-act="undo">desfazer</button>` : `<span class="gst">Já reservado</span>`)
+                             : `<button class="px" data-act="open">RESERVAR</button>`;
+      return `<div class="gift ${g.reservado?(meu?'mine':'taken'):''}" data-id="${esc(g.id)}">
+        <div class="n">🎁 ${esc(g.item)}${g.obs?`<small>${esc(g.obs)}</small>`:''}${g.link?`<a href="${esc(g.link)}" target="_blank" rel="noopener">ver na loja ↗</a>`:''}</div>
+        <div class="gact">${st}</div>
+        <div class="gform hide"><input placeholder="Seu nome" maxlength="40"><button class="px" data-act="ok">CONFIRMAR</button><button class="lnk" data-act="cancel">cancelar</button></div></div>`; }).join('');
+  }catch(e){ box.innerHTML='<p class="note">Não consegui carregar a lista agora. Tente atualizar a página.</p>'; }
 }
 $('#gifts').addEventListener('click', async e=>{
-  const b=e.target.closest('button'); if(!b) return; const card=b.closest('.gift');
-  const quem = (form.nome.value||'').trim() || prompt('Seu nome, para reservar:'); if(!quem) return;
-  b.disabled=true; b.textContent='…';
-  try{ const res=await post({action:'gift', id:card.dataset.id, quem}); if(!res.ok) throw 0;
-    card.classList.add('taken'); b.textContent='RESERVADO'; SFX.coin(); }
-  catch(err){ b.disabled=false; b.textContent='RESERVAR'; alert('Alguém reservou antes ou houve um erro. Atualizando…'); loadGifts(); }
+  const b=e.target.closest('[data-act]'); if(!b) return; const card=b.closest('.gift'); const id=card.dataset.id; const act=b.dataset.act;
+  const fm=card.querySelector('.gform'), inp=fm.querySelector('input');
+  if(act==='open'){ fm.classList.remove('hide'); card.querySelector('.gact').classList.add('hide'); inp.value=(form.nome.value||'').trim(); inp.focus(); return; }
+  if(act==='cancel'){ fm.classList.add('hide'); card.querySelector('.gact').classList.remove('hide'); return; }
+  if(act==='ok'){ const quem=inp.value.trim(); if(!quem){ inp.focus(); inp.style.outline='3px solid var(--red)'; return; }
+    b.disabled=true; b.textContent='SALVANDO…';
+    try{ const res=await post({action:'gift', id, quem}); if(!res.ok) throw new Error(res.error||'erro');
+      setMyGift(id,quem); SFX.coin(); confetti(30); toast('🎁 Presente reservado! Obrigado, '+quem+'. Ninguém mais vai escolher esse.'); loadGifts(); }
+    catch(err){ toast(String(err.message).includes('reservado')?'Ops! Alguém acabou de reservar esse. Escolha outro 🙂':'Não consegui salvar agora. Tente de novo.'); loadGifts(); }
+    return; }
+  if(act==='undo'){ const quem=myGifts()[id]; b.disabled=true; b.textContent='…';
+    try{ const res=await post({action:'ungift', id, quem}); if(!res.ok) throw 0; setMyGift(id,null); toast('Reserva desfeita. O presente voltou para a lista.'); loadGifts(); }
+    catch(err){ b.disabled=false; b.textContent='desfazer'; toast('Não consegui desfazer agora. Tente de novo.'); } }
 });
 loadGifts();
 
