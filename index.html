@@ -364,10 +364,55 @@ const SFX = {
   sad:   ()=>seq(['E4','D4','C4',null,'B4','A4','G4'],140,'triangle'),
   click: ()=>{ const a=ac(); tone(N.C5,a.currentTime,.05,'square',.05); }
 };
-$('#mute').onclick = ()=>{ muted=!muted; $('#mute').textContent = muted?'🔇':'🔊'; };
+
+/* ---------- Trilha de fundo original (chiptune gerado no navegador) ---------- */
+const Music=(()=>{
+  // notas por semitom a partir de A4=440
+  const f=n=>440*Math.pow(2,(n-69)/12);
+  const NM={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+  const m=s=>{ if(!s||s==='-') return null; const k=s.match(/^([A-G]#?)(\d)$/); return 12*(+k[2]+1)+NM[k[1]]; };
+  // Música 1 (convite): tranquila e alegre, 104 bpm. Cada string = 1 compasso de 8 colcheias.
+  const TUNES={
+    menu:{bpm:104, vol:1,
+      lead:['E5 - G5 E5 D5 - C5 -','D5 - E5 - C5 - A4 -','F4 A4 C5 - D5 C5 A4 -','G4 - B4 D5 G5 - - -',
+            'E5 - G5 E5 D5 - C5 -','D5 - E5 - G5 - E5 -','F5 E5 D5 C5 A4 - C5 -','C5 - - - - - - -'],
+      bass:['C3 G3 C3 G3','A2 E3 A2 E3','F2 C3 F2 C3','G2 D3 G2 D3','C3 G3 C3 G3','A2 E3 A2 E3','F2 C3 G2 D3','C3 G3 C3 -'],
+      arp:true},
+    // Música 2 (jogo): mais rápida e animada, 150 bpm
+    game:{bpm:150, vol:1,
+      lead:['C5 E5 G5 E5 C6 - G5 -','A4 C5 E5 C5 A5 - E5 -','F4 A4 C5 A4 F5 - C5 -','G4 B4 D5 G5 F5 E5 D5 -',
+            'E5 E5 - E5 - C5 E5 -','G5 - - - G4 - - -','C5 - G4 - E4 - A4 B4','A4 G4 E5 G5 A5 - - -'],
+      bass:['C3 C3 G2 G2','A2 A2 E2 E2','F2 F2 C3 C3','G2 G2 B2 D3','C3 C3 G2 C3','G2 G2 D3 G2','C3 C3 E3 E3','F2 G2 C3 -'],
+      arp:false}
+  };
+  let cur=null, timer=null, step=0, next=0, master=null;
+  function out(){ const a=ac(); if(!master){ master=a.createGain(); master.gain.value=0.9; master.connect(a.destination); } return master; }
+  function note(freq,t,dur,type,vol){ const a=ac(); const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(out()); o.start(t); o.stop(t+dur+0.02); }
+  function tick(){ if(!cur) return; const a=ac(), T=TUNES[cur], e8=60/T.bpm/2;
+    while(next < a.currentTime+0.25){
+      const bar=Math.floor(step/8)%T.lead.length, pos=step%8;
+      if(!muted && !document.hidden){
+        const L=T.lead[bar].split(' ')[pos], n=m(L); if(n) note(f(n),next,e8*1.6,'square',0.028);
+        if(pos%2===0){ const B=T.bass[bar].split(' ')[pos/2], b=m(B); if(b) note(f(b),next,e8*1.8,'triangle',0.09); }
+        if(T.arp && n && pos%2===1) note(f(n+12),next,e8*0.5,'square',0.010);
+        if(cur==='game' && pos%2===0) note(1800,next,0.03,'square',0.006); // chimbal leve
+      }
+      next+=e8; step++;
+    } }
+  return {
+    play(name){ ac(); if(navigator.audioSession){ try{ navigator.audioSession.type='playback'; }catch(e){} }
+      if(cur===name) return; cur=name; step=0; next=ac().currentTime+0.1; if(!timer) timer=setInterval(tick,60); },
+    stop(){ cur=null; clearInterval(timer); timer=null; }
+  };
+})();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && AC && AC.state==='suspended') AC.resume(); });
+$('#mute').onclick = ()=>{ muted=!muted; $('#mute').textContent = muted?'🔇':'🔊'; try{ localStorage.setItem('vitor4_mute',muted?'1':''); }catch(e){} if(!muted) Music.play(window.__inGame?'game':'menu'); };
+try{ if(localStorage.getItem('vitor4_mute')){ muted=true; $('#mute').textContent='🔇'; } }catch(e){}
 
 /* ---------- Capa ---------- */
-$('#start').onclick = ()=>{ SFX.start(); $('#cover').classList.add('out'); setTimeout(()=>$('#cover').remove(),800); confetti(60); };
+$('#start').onclick = ()=>{ SFX.start(); setTimeout(()=>Music.play('menu'),1200); $('#cover').classList.add('out'); setTimeout(()=>$('#cover').remove(),800); confetti(60); };
 
 /* ---------- Contagem regressiva ---------- */
 const alvo = new Date(CFG.inicio).getTime();
@@ -530,7 +575,7 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
   addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='ArrowUp') && document.activeElement===document.body && cv.getBoundingClientRect().top<innerHeight){ if(state==='play'||state==='count'){ e.preventDefault(); if(!hold) down(); } } });
   addEventListener('keyup',e=>{ if(e.code==='Space'||e.code==='ArrowUp') up(); });
   $('#play').onclick=()=>startGame();
-  function startGame(){ ac(); reset(); state='count'; time0=performance.now(); lastT=time0; $('#play').textContent='JOGANDO…'; $('#rankBox').classList.add('hide'); requestAnimationFrame(loop); }
+  function startGame(){ ac(); window.__inGame=true; Music.play('game'); reset(); state='count'; time0=performance.now(); lastT=time0; $('#play').textContent='JOGANDO…'; $('#rankBox').classList.add('hide'); requestAnimationFrame(loop); }
 
   /* ---------- efeitos ---------- */
   function burst(px,py,col,n,sp){ for(let i=0;i<n;i++){ const a=Math.random()*6.28, v=(sp||2)*(0.5+Math.random()); parts.push({x:px,y:py,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:30+Math.random()*20,c:col}); } }
@@ -639,7 +684,7 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
   function heart(hx,hy){ x.fillRect(hx+1,hy,3,2); x.fillRect(hx+6,hy,3,2); x.fillRect(hx,hy+2,10,3); x.fillRect(hx+1,hy+5,8,2); x.fillRect(hx+3,hy+7,4,2); }
   function countTxt(t){ x.fillStyle='rgba(27,27,47,.35)'; x.fillRect(0,0,W,H); x.font='28px "Press Start 2P"'; x.textAlign='center'; x.fillStyle='#1b1b2f'; x.fillText(t,W/2+3,H/2+3); x.fillStyle='#fbd000'; x.fillText(t,W/2,H/2); }
 
-  function end(won){ state='over'; hold=false; $('#play').textContent='▶ JOGAR DE NOVO';
+  function end(won){ state='over'; hold=false; window.__inGame=false; setTimeout(()=>Music.play('menu'),won?2500:1500); $('#play').textContent='▶ JOGAR DE NOVO';
     const best=Math.max(best0, +localStorage.getItem('vitor4_best2')||0, score); localStorage.setItem('vitor4_best2',best); $('#best').textContent=best;
     if(!won) SFX.sad();
     draw(performance.now()); x.fillStyle='rgba(27,27,47,.78)'; x.fillRect(0,0,W,H); x.textAlign='center';
