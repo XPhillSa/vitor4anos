@@ -7,65 +7,87 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Nunito,system-ui,sans-serif;background:#1b1b2f;color:#eee;padding:16px}
+body{font-family:Nunito,system-ui,sans-serif;background:#1b1b2f;color:#eee;padding:16px;min-height:100vh}
 .px{font-family:'Press Start 2P',monospace}
-h1{font-size:14px;color:#fbd000;margin-bottom:14px}
-.wrap{max-width:960px;margin:0 auto}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
-.kpi div{background:#2a2a45;border:3px solid #fff2;padding:14px;text-align:center}
-.kpi b{display:block;font-size:26px;color:#fbd000}
-.kpi small{font-size:10px;letter-spacing:1px}
-.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
-input,button{font:inherit;font-weight:700;padding:10px 12px;border:3px solid #fff3;background:#2a2a45;color:#fff}
-button{background:#e52521;cursor:pointer}
-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
-th,td{padding:8px 10px;border-bottom:1px solid #fff2;text-align:left;vertical-align:top}
-th{background:#2a2a45;font-size:11px;letter-spacing:1px;position:sticky;top:0}
-tr.sim td:first-child{border-left:4px solid #43b047}tr.nao td:first-child{border-left:4px solid #e52521}
-.muted{opacity:.6;font-size:12px}
-details{margin-top:18px}summary{cursor:pointer;font-weight:800;color:#9cc8ff}
-.tbl{overflow:auto;max-height:70vh}
+.wrap{max-width:720px;margin:0 auto}
+h1{font-size:13px;color:#fbd000;margin:4px 0 14px;line-height:1.6}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.kpi div{background:#2a2a45;border:3px solid #fff2;padding:12px 6px;text-align:center}
+.kpi b{display:block;font-size:26px;color:#fbd000;line-height:1.1}
+.kpi small{font-size:11px;font-weight:800;letter-spacing:.5px;line-height:1.3;display:block;margin-top:6px}
+.bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+input,button{font:inherit;font-weight:800;padding:12px;border:3px solid #fff3;background:#2a2a45;color:#fff;border-radius:0}
+button{cursor:pointer}
+.b-red{background:#e52521}.b-blue{background:#049cd8}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;font-size:13px;padding:10px 4px}.tabs button.on{background:#fbd000;color:#1b1b2f}
+.card{background:#fff8e7;color:#1b1b2f;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px 14px;margin-bottom:10px;border-left:10px solid #43b047}
+.card.nao{border-left-color:#e52521;opacity:.85}
+.card h3{font-size:17px;display:flex;justify-content:space-between;gap:8px}
+.card h3 span{font-size:13px;white-space:nowrap;color:#2f8a3a}
+.card.nao h3 span{color:#e52521}
+.card ul{list-style:none;margin:8px 0 0;display:grid;gap:3px}
+.card li{font-size:15px}
+.card .meta{font-size:13px;color:#555;margin-top:8px;display:grid;gap:3px}
+.card .alert{background:#ffe3e2;color:#9e1b18;font-weight:800;padding:6px 8px;margin-top:8px}
+.card a{color:#049cd8}
+.muted{opacity:.65;font-size:12px}
+#login{background:#2a2a45;border:3px solid #fff2;padding:16px;display:grid;gap:10px}
+.hide{display:none!important}
 </style>
 </head>
 <body><div class="wrap">
-<h1 class="px">PAINEL — FESTA DO VITOR</h1>
-<div class="bar">
-  <input id="url" placeholder="URL do Web App (…/exec)" style="flex:2;min-width:240px">
-  <input id="tok" type="password" placeholder="Chave admin" style="flex:1;min-width:140px">
-  <button id="go">Atualizar</button>
-  <button id="csv" style="background:#049cd8">Baixar CSV</button>
-  <span class="muted" id="when"></span>
-</div>
-<div class="kpi" id="kpi"></div>
-<div class="bar"><input id="q" placeholder="Filtrar por nome…" style="flex:1"><label><input type="checkbox" id="soSim" style="width:auto"> só confirmados</label></div>
-<div class="tbl"><table id="t"><thead><tr><th>Nome</th><th>Presença</th><th>Ad.</th><th>Cri.</th><th>Quem vem</th><th>Restrição</th><th>Telefone</th><th>Recado</th><th>Quando</th></tr></thead><tbody></tbody></table></div>
+<h1 class="px">🎂 PAINEL DA FESTA DO VITOR</h1>
 
-<p class="muted" style="margin-top:20px">Os dados vêm direto da planilha. Para alterar uma resposta, edite na planilha. URL e chave ficam salvos só neste navegador.</p>
+<div id="login" class="hide">
+  <p>Digite a chave do painel (só na primeira vez neste celular):</p>
+  <input id="tok" type="password" placeholder="Chave">
+  <button class="b-red" id="enter">ENTRAR</button>
+</div>
+
+<div id="app" class="hide">
+  <div class="kpi" id="kpi"></div>
+  <div class="bar"><button class="b-red" id="go" style="flex:1">🔄 Atualizar</button><button class="b-blue" id="csv">⬇ CSV</button></div>
+  <div class="tabs"><button data-f="sim" class="on">Vêm</button><button data-f="nao">Não vêm</button><button data-f="all">Todos</button></div>
+  <input id="q" placeholder="Buscar nome…" style="width:100%;margin-bottom:12px">
+  <div id="list"><p class="muted">Carregando…</p></div>
+  <p class="muted" id="when" style="margin-top:10px"></p>
+</div>
 </div>
 <script>
-const $=s=>document.querySelector(s); let ROWS=[];
-$('#url').value=localStorage.getItem('v4_url')||''; $('#tok').value=localStorage.getItem('v4_tok')||'';
+const API='https://script.google.com/macros/s/AKfycbyxvUlmLbhNzfIMGU5Q6vVX07LvLVPpnxNyIRNxr1Ytq1cuwjBv41c_Ca943CQwsxZvrA/exec';
+const $=s=>document.querySelector(s); let ROWS=[], F='sim';
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function getKey(){ const h=new URLSearchParams(location.hash.slice(1)).get('k'); if(h){ try{localStorage.setItem('v4_tok',h);}catch(e){} history.replaceState(null,'',location.pathname); return h; } try{ return localStorage.getItem('v4_tok')||''; }catch(e){ return ''; } }
+let KEY=getKey();
 async function load(){
-  const url=$('#url').value.trim(), tok=$('#tok').value.trim(); if(!url||!tok) return alert('Informe URL e chave');
-  localStorage.setItem('v4_url',url); localStorage.setItem('v4_tok',tok);
-  $('#go').textContent='…';
-  try{ const j=await (await fetch(`${url}?action=list&chave=${encodeURIComponent(tok)}`)).json();
-    if(!j.ok) throw new Error(j.error); ROWS=j.rows; render(); gifts(j.gifts); $('#when').textContent='atualizado '+new Date().toLocaleTimeString('pt-BR');
-  }catch(e){ alert('Erro: '+e.message); } $('#go').textContent='Atualizar';
+  $('#go').textContent='⏳ Carregando…';
+  try{ const j=await (await fetch(`${API}?action=list&chave=${encodeURIComponent(KEY)}`)).json();
+    if(!j.ok){ try{localStorage.removeItem('v4_tok');}catch(e){} KEY=''; showLogin('Chave incorreta. Tente de novo.'); return; }
+    ROWS=j.rows.slice().reverse(); $('#login').classList.add('hide'); $('#app').classList.remove('hide'); render(); $('#when').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){ $('#list').innerHTML='<p class="muted">Sem conexão agora. Toque em Atualizar.</p>'; }
+  $('#go').textContent='🔄 Atualizar';
 }
+function people(r){ const s=String(r['Quem vem']||r['Nomes das crianças']||''); return s?s.split(/;\s*/).filter(Boolean):[]; }
 function render(){
-  const q=$('#q').value.toLowerCase(), so=$('#soSim').checked;
-  const rows=ROWS.filter(r=>(!q||String(r['Nome']).toLowerCase().includes(q))&&(!so||r['Presença']==='SIM'));
   const sim=ROWS.filter(r=>r['Presença']==='SIM'), ad=sim.reduce((a,r)=>a+(+r['Adultos']||0),0), cr=sim.reduce((a,r)=>a+(+r['Crianças']||0),0);
-  const restr=sim.filter(r=>r['Restrição alimentar']).length;
-  $('#kpi').innerHTML=[['Famílias SIM',sim.length],['Adultos',ad],['Crianças',cr],['Pessoas',ad+cr],['Disseram NÃO',ROWS.length-sim.length],['Com restrição',restr]]
-    .map(([l,v])=>`<div><b>${v}</b><small class="px">${l.toUpperCase()}</small></div>`).join('');
-  $('#t tbody').innerHTML=rows.map(r=>`<tr class="${r['Presença']==='SIM'?'sim':'nao'}"><td><b>${r['Nome']}</b></td><td>${r['Presença']}</td><td>${r['Adultos']}</td><td>${r['Crianças']}</td><td>${r['Quem vem']||r['Nomes das crianças']||''}</td><td>${r['Restrição alimentar']||''}</td><td>${r['Telefone']||''}</td><td>${r['Recado']||''}</td><td class="muted">${new Date(r['Data/Hora']).toLocaleString('pt-BR')}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">Nenhuma resposta ainda.</td></tr>';
+  $('#kpi').innerHTML=[['PESSOAS',ad+cr],['ADULTOS',ad],['CRIANÇAS',cr],['FAMÍLIAS SIM',sim.length],['NÃO VÊM',ROWS.length-sim.length],['RESTRIÇÕES',sim.filter(r=>r['Restrição alimentar']&&!/^n(ã|a)o$/i.test(String(r['Restrição alimentar']).trim())).length]]
+    .map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join('');
+  const q=$('#q').value.toLowerCase();
+  const rows=ROWS.filter(r=>(F==='all'||(F==='sim'?r['Presença']==='SIM':r['Presença']!=='SIM')) && (!q||(String(r['Nome'])+' '+people(r).join(' ')).toLowerCase().includes(q)));
+  $('#list').innerHTML=rows.map(r=>{ const s=r['Presença']==='SIM', ps=people(r), rest=String(r['Restrição alimentar']||'').trim(), tel=String(r['Telefone']||'').replace(/^'/,'');
+    return `<div class="card ${s?'':'nao'}"><h3>${esc(r['Nome'])}<span>${s?`✅ ${(+r['Adultos']||0)+(+r['Crianças']||0)} pessoa(s)`:'❌ não vem'}</span></h3>
+      ${ps.length?`<ul>${ps.map(p=>`<li>${/criança/.test(p)?'🧒':'🧑'} ${esc(p.replace(/\s*\((adulto)\)/,''))}</li>`).join('')}</ul>`:''}
+      ${rest&&!/^n(ã|a)o$/i.test(rest)?`<div class="alert">⚠️ ${esc(rest)}</div>`:''}
+      <div class="meta">${r['Recado']?`<span>💬 ${esc(r['Recado'])}</span>`:''}${tel?`<span>📱 <a href="https://wa.me/${tel.replace(/\D/g,'')}">${esc(tel)}</a></span>`:''}<span>🕒 ${new Date(r['Data/Hora']).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div></div>`; }).join('') || '<p class="muted">Nenhuma resposta aqui ainda.</p>';
 }
-function gifts(g){ return; $('#g tbody').innerHTML=(g||[]).map(x=>`<tr><td>${x.item}</td><td>${x.reservado?'✔ reservado':'—'}</td></tr>`).join(''); }
-$('#go').onclick=load; $('#q').oninput=render; $('#soSim').onchange=render;
-$('#csv').onclick=()=>{ if(!ROWS.length) return; const h=Object.keys(ROWS[0]); const csv=[h.join(';'),...ROWS.map(r=>h.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`).join(';'))].join('\n');
+function showLogin(msg){ $('#app').classList.add('hide'); $('#login').classList.remove('hide'); if(msg) $('#login p').textContent=msg; }
+$('#enter').onclick=()=>{ KEY=$('#tok').value.trim(); if(!KEY) return; try{localStorage.setItem('v4_tok',KEY);}catch(e){} load(); };
+$('#go').onclick=load; $('#q').oninput=render;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b)); F=b.dataset.f; render(); });
+$('#csv').onclick=()=>{ if(!ROWS.length) return; const h=['Data/Hora','Nome','Presença','Adultos','Crianças','Quem vem','Restrição alimentar','Recado','Telefone'];
+  const csv=[h.join(';'),...ROWS.map(r=>h.map(k=>`"${String((k==='Quem vem'?(r[k]||r['Nomes das crianças']):r[k])??'').replace(/"/g,'""')}"`).join(';'))].join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})); a.download='confirmacoes-vitor4.csv'; a.click(); };
-if($('#url').value&&$('#tok').value) load();
+if(KEY) load(); else showLogin();
+setInterval(()=>{ if(KEY && !document.hidden) load(); },60000);
 </script>
 </body></html>
