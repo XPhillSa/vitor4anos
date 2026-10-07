@@ -38,8 +38,8 @@ details{margin-top:18px}summary{cursor:pointer;font-weight:800;color:#9cc8ff}
 </div>
 <div class="kpi" id="kpi"></div>
 <div class="bar"><input id="q" placeholder="Filtrar por nome…" style="flex:1"><label><input type="checkbox" id="soSim" style="width:auto"> só confirmados</label></div>
-<div class="tbl"><table id="t"><thead><tr><th>Nome</th><th>Presença</th><th>Ad.</th><th>Cri.</th><th>Crianças</th><th>Restrição</th><th>Telefone</th><th>Recado</th><th>Quando</th></tr></thead><tbody></tbody></table></div>
-<details><summary>Presentes reservados</summary><table id="g"><thead><tr><th>Item</th><th>Reservado por</th></tr></thead><tbody></tbody></table></details>
+<div class="tbl"><table id="t"><thead><tr><th>Nome</th><th>Presença</th><th>Ad.</th><th>Cri.</th><th>Quem vem</th><th>Restrição</th><th>Telefone</th><th>Recado</th><th>Quando</th></tr></thead><tbody></tbody></table></div>
+
 <p class="muted" style="margin-top:20px">Os dados vêm direto da planilha. Para alterar uma resposta, edite na planilha. URL e chave ficam salvos só neste navegador.</p>
 </div>
 <script>
@@ -60,9 +60,9 @@ function render(){
   const restr=sim.filter(r=>r['Restrição alimentar']).length;
   $('#kpi').innerHTML=[['Famílias SIM',sim.length],['Adultos',ad],['Crianças',cr],['Pessoas',ad+cr],['Disseram NÃO',ROWS.length-sim.length],['Com restrição',restr]]
     .map(([l,v])=>`<div><b>${v}</b><small class="px">${l.toUpperCase()}</small></div>`).join('');
-  $('#t tbody').innerHTML=rows.map(r=>`<tr class="${r['Presença']==='SIM'?'sim':'nao'}"><td><b>${r['Nome']}</b></td><td>${r['Presença']}</td><td>${r['Adultos']}</td><td>${r['Crianças']}</td><td>${r['Nomes das crianças']||''}</td><td>${r['Restrição alimentar']||''}</td><td>${r['Telefone']||''}</td><td>${r['Recado']||''}</td><td class="muted">${new Date(r['Data/Hora']).toLocaleString('pt-BR')}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">Nenhuma resposta ainda.</td></tr>';
+  $('#t tbody').innerHTML=rows.map(r=>`<tr class="${r['Presença']==='SIM'?'sim':'nao'}"><td><b>${r['Nome']}</b></td><td>${r['Presença']}</td><td>${r['Adultos']}</td><td>${r['Crianças']}</td><td>${r['Quem vem']||r['Nomes das crianças']||''}</td><td>${r['Restrição alimentar']||''}</td><td>${r['Telefone']||''}</td><td>${r['Recado']||''}</td><td class="muted">${new Date(r['Data/Hora']).toLocaleString('pt-BR')}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">Nenhuma resposta ainda.</td></tr>';
 }
-function gifts(g){ $('#g tbody').innerHTML=(g||[]).map(x=>`<tr><td>${x.item}</td><td>${x.reservado?'✔ reservado':'—'}</td></tr>`).join(''); }
+function gifts(g){ return; $('#g tbody').innerHTML=(g||[]).map(x=>`<tr><td>${x.item}</td><td>${x.reservado?'✔ reservado':'—'}</td></tr>`).join(''); }
 $('#go').onclick=load; $('#q').oninput=render; $('#soSim').onchange=render;
 $('#csv').onclick=()=>{ if(!ROWS.length) return; const h=Object.keys(ROWS[0]); const csv=[h.join(';'),...ROWS.map(r=>h.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`).join(';'))].join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'})); a.download='confirmacoes-vitor4.csv'; a.click(); };

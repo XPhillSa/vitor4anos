@@ -135,6 +135,12 @@ input:focus,textarea:focus{outline:3px solid var(--yellow)}
 .like{display:flex;align-items:center;gap:10px;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;font-weight:800;font-size:15px;line-height:1.2}
 .like span{font-size:28px;flex:none}
 .like:nth-child(4n+1){background:#ffe3e2}.like:nth-child(4n+2){background:#fff4c2}.like:nth-child(4n+3){background:#dff7e0}.like:nth-child(4n){background:#dcefff}
+.person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:10px}
+.person .pn{grid-column:1/2;padding:10px}.person .rm{grid-column:2;grid-row:1;width:36px;height:36px;background:#ffe3e2;border:3px solid var(--ink);font-weight:800}
+.seg{display:flex;grid-column:1/2}.seg button{flex:1;padding:9px 6px;font-weight:800;background:#eee;border:3px solid var(--ink)}.seg button+button{border-left:0}.seg button.on{background:var(--green);color:#fff}
+.person .pa{grid-column:2;grid-row:2;width:84px;padding:9px}
+.addp{background:var(--yellow);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:12px;font-size:10px}
+.tot{text-align:center;font-weight:800;background:#dff7e0;border:3px dashed var(--green);padding:10px}
 #mute{position:fixed;right:12px;bottom:12px;z-index:40;width:48px;height:48px;background:var(--ink);color:#fff;font-size:20px;border:3px solid #fff;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
 footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shadow:2px 2px 0 rgba(0,0,0,.4)}
 .confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:60;animation:fall linear forwards;pointer-events:none}
@@ -195,13 +201,14 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
         <label><input type="radio" name="presenca" value="sim" required><span>✅ SIM, vamos!</span></label>
         <label><input type="radio" name="presenca" value="nao"><span>😢 Não vou conseguir</span></label>
       </div>
-      <div id="detalhes" class="hide" style="display:grid;gap:14px">
-        <div class="two">
-          <label>Adultos<div class="qty"><button type="button" data-d="-1" data-t="adultos">−</button><input name="adultos" type="number" min="0" value="1" readonly><button type="button" data-d="1" data-t="adultos">+</button></div></label>
-          <label>Crianças<div class="qty"><button type="button" data-d="-1" data-t="criancas">−</button><input name="criancas" type="number" min="0" value="1" readonly><button type="button" data-d="1" data-t="criancas">+</button></div></label>
-        </div>
-        <label>Nome e idade das crianças <input name="nomes_criancas" placeholder="Ex.: Maria (4), Pedro (6)"></label>
-        <label>Alguma alergia ou restrição alimentar? <input name="restricao" placeholder="Ex.: alergia a amendoim, sem lactose"></label>
+      <p class="note" id="ynHint" style="margin:-4px 0 0">Marcando <b>SIM</b>, você informa logo abaixo quem da família vem.</p>
+      <div id="detalhes" class="hide" style="display:grid;gap:12px">
+        <div class="px" style="font-size:11px;color:var(--blue)">QUEM VEM COM VOCÊ?</div>
+        <div id="people" style="display:grid;gap:10px"></div>
+        <button type="button" id="addP" class="px addp">+ ADICIONAR PESSOA</button>
+        <div class="tot" id="tot"></div>
+        <input type="hidden" name="adultos" value="0"><input type="hidden" name="criancas" value="0"><input type="hidden" name="nomes_criancas" value="">
+        <label>Alguma alergia ou restrição alimentar? <input name="restricao" placeholder="Ex.: Pedro tem alergia a amendoim"></label>
       </div>
       <label>Recado para o Vitor (opcional) <textarea name="mensagem" rows="2" placeholder="Ele vai adorar ler!"></textarea></label>
       <button id="submit" class="px" type="submit">ENVIAR RESPOSTA ▶</button>
@@ -376,8 +383,27 @@ $('#ics').href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
 
 /* ---------- RSVP ---------- */
 const form=$('#form');
-form.addEventListener('change', e=>{ if(e.target.name==='presenca'){ $('#detalhes').classList.toggle('hide', e.target.value!=='sim'); SFX.click(); } });
-form.addEventListener('click', e=>{ const b=e.target.closest('[data-d]'); if(!b) return; const i=form[b.dataset.t]; i.value=Math.max(0, +i.value + +b.dataset.d); SFX.click(); });
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'){ $('#detalhes').classList.toggle('hide', e.target.value!=='sim'); $('#ynHint').classList.toggle('hide', e.target.value==='sim'); SFX.click(); } });
+/* lista de quem vem */
+const peopleBox=$('#people');
+function personRow(p={}){ const d=document.createElement('div'); d.className='person';
+  d.innerHTML=`<input class="pn" placeholder="Nome da pessoa" maxlength="40" value="${(p.n||'').replace(/"/g,'&quot;')}">
+    <div class="seg"><button type="button" data-k="a" class="${p.k!=='c'?'on':''}">Adulto</button><button type="button" data-k="c" class="${p.k==='c'?'on':''}">Criança</button></div>
+    <input class="pa ${p.k==='c'?'':'hide'}" type="number" inputmode="numeric" min="0" max="17" placeholder="Idade" value="${p.a||''}">
+    <button type="button" class="rm" title="Remover">✕</button>`;
+  peopleBox.appendChild(d); calc(); return d; }
+function people(){ return [...peopleBox.children].map(r=>({n:r.querySelector('.pn').value.trim(), k:r.querySelector('.seg .on').dataset.k, a:r.querySelector('.pa').value})); }
+function calc(){ const ps=people(); const ad=ps.filter(p=>p.k==='a').length, cr=ps.filter(p=>p.k==='c').length;
+  form.adultos.value=ad; form.criancas.value=cr;
+  form.nomes_criancas.value=ps.filter(p=>p.n).map(p=>p.k==='c'?`${p.n} (criança${p.a?', '+p.a+' anos':''})`:`${p.n} (adulto)`).join('; ');
+  $('#tot').innerHTML=`<b>${ad}</b> adulto${ad===1?'':'s'} + <b>${cr}</b> criança${cr===1?'':'s'} = <b>${ad+cr}</b> pessoa${ad+cr===1?'':'s'}`;
+  peopleBox.querySelectorAll('.rm').forEach(b=>b.style.visibility=peopleBox.children.length>1?'visible':'hidden'); }
+peopleBox.addEventListener('input',calc);
+peopleBox.addEventListener('click',e=>{ const r=e.target.closest('.person'); if(!r) return;
+  const sg=e.target.closest('.seg button'); if(sg){ r.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b===sg)); r.querySelector('.pa').classList.toggle('hide',sg.dataset.k!=='c'); SFX.click(); calc(); }
+  if(e.target.closest('.rm')){ r.remove(); calc(); } });
+$('#addP').onclick=()=>{ personRow({k:'c'}).querySelector('.pn').focus(); SFX.click(); };
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({k:'a'}); personRow({k:'c'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
 
 async function post(payload){
   if(!CFG.scriptUrl){ await new Promise(r=>setTimeout(r,700)); return {ok:true, demo:true}; }
@@ -389,6 +415,7 @@ form.onsubmit = async e=>{
   const fd = new FormData(form); const d = Object.fromEntries(fd.entries());
   if(!d.nome.trim()){ form.nome.focus(); form.nome.style.outline='3px solid var(--red)'; return; }
   if(!d.presenca){ alert('Marque SIM ou NÃO, por favor 🙂'); return; }
+  if(d.presenca==='sim'){ calc(); const ps=people(); if(!ps.some(p=>p.n)){ peopleBox.querySelector('.pn')?.focus(); toast('Coloque o nome de quem vem 🙂'); return; } if(ps.some(p=>!p.n)){ const v=[...peopleBox.querySelectorAll('.pn')].find(i=>!i.value.trim()); v.focus(); v.style.outline='3px solid var(--red)'; toast('Falta o nome de uma pessoa (ou toque no ✕ para remover)'); return; } Object.assign(d,{adultos:form.adultos.value,criancas:form.criancas.value,nomes_criancas:form.nomes_criancas.value}); d.people=ps; }
   if(d.presenca==='nao'){ d.adultos=0; d.criancas=0; d.nomes_criancas=''; d.restricao=''; }
   d.convidado_link = convidado; d.user_agent = navigator.userAgent.slice(0,80);
   const btn=$('#submit'); btn.disabled=true; btn.textContent='SALVANDO…';
@@ -408,7 +435,7 @@ function showDone(d, demo){
   $('#doneEmoji').textContent = sim?'🎉':'💙';
   $('#doneTitle').textContent = sim?'PRESENÇA CONFIRMADA!':'QUE PENA! FICA PRA PRÓXIMA';
   $('#doneText').textContent = sim
-    ? `${d.nome}, o Vitor já está contando com ${d.adultos} adulto(s) e ${d.criancas} criança(s). Até dia 24!`
+    ? `${d.nome}, o Vitor já está contando com ${d.adultos} adulto(s) e ${d.criancas} criança(s): ${(d.people||[]).map(p=>p.n).join(', ')}. Até dia 24!`
     : `${d.nome}, obrigado por avisar. O Vitor manda um abraço!`
     + (demo?' (modo demonstração: nada foi gravado — publique o Apps Script)':'');
   const msg = sim ? `Oi! Confirmei presença na festa do Vitor (24/10, 16h): ${d.adultos} adulto(s) e ${d.criancas} criança(s). 🎉`
@@ -419,9 +446,10 @@ function showDone(d, demo){
   $('#rsvp').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#again').onclick = e=>{ e.preventDefault(); $('#done').classList.add('hide'); form.classList.remove('hide'); $('#submit').disabled=false; $('#submit').textContent='ENVIAR RESPOSTA ▶'; };
-try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } } }catch(e){}
+try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } (prev.people||[]).forEach(p=>personRow(p)); } }catch(e){}
 
 /* ---------- Presentes ---------- */
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),4000); }
 /* ---------- Confete ---------- */
 function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'];
   for(let i=0;i<n;i++){ const c=document.createElement('i'); c.className='confetti';
