@@ -141,6 +141,8 @@ input:focus,textarea:focus{outline:3px solid var(--yellow)}
 .person .pa{grid-column:2;grid-row:2;width:84px;padding:9px}
 .addp{background:var(--yellow);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:12px;font-size:10px}
 .tot{text-align:center;font-weight:800;background:#dff7e0;border:3px dashed var(--green);padding:10px}
+.errbox{background:#ffe3e2;border:3px solid var(--red);padding:12px;font-weight:800;color:#9e1b18;display:grid;gap:10px}
+.proto{background:#dff7e0;border:3px solid var(--green);padding:12px;font-weight:700;color:#1d5a2a;margin:0 0 14px;text-align:center;line-height:1.5}
 #mute{position:fixed;right:12px;bottom:12px;z-index:40;width:48px;height:48px;background:var(--ink);color:#fff;font-size:20px;border:3px solid #fff;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
 footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shadow:2px 2px 0 rgba(0,0,0,.4)}
 .confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:60;animation:fall linear forwards;pointer-events:none}
@@ -194,6 +196,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
   <section id="rsvp">
     <span class="tag px">CONFIRMAR PRESENÇA</span>
     <h2 class="px">VOCÊ VEM?</h2>
+    <div id="already" class="proto hide"></div>
     <form id="form" novalidate>
       <label>Seu nome <input name="nome" required placeholder="Ex.: Família Silva ou Ana e João" autocomplete="name"></label>
       <label>WhatsApp (para a gente avisar novidades) <input name="telefone" type="tel" inputmode="tel" placeholder="(31) 9 9999-9999" autocomplete="tel"></label>
@@ -211,12 +214,14 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
         <label>Alguma alergia ou restrição alimentar? <input name="restricao" placeholder="Ex.: Pedro tem alergia a amendoim"></label>
       </div>
       <label>Recado para o Vitor (opcional) <textarea name="mensagem" rows="2" placeholder="Ele vai adorar ler!"></textarea></label>
+      <div id="errBox" class="errbox hide"><p id="errMsg"></p><a id="errWa" class="btn wa hide" target="_blank" rel="noopener">💬 Avisar pelo WhatsApp</a></div>
       <button id="submit" class="px" type="submit">ENVIAR RESPOSTA ▶</button>
       <p class="note">Por favor, confirme até <b>17 de outubro</b>. Pode responder de novo se mudar algo.</p>
     </form>
     <div id="done" class="ok hide">
       <div class="big" id="doneEmoji">🎉</div>
       <h3 class="px" id="doneTitle">RESPOSTA SALVA!</h3>
+      <div id="proto" class="proto"></div>
       <p id="doneText" class="lead" style="font-size:15px"></p>
       <div class="btns"><a class="btn wa" id="waShare" target="_blank" rel="noopener">💬 Avisar no WhatsApp</a></div>
       <p class="note"><a href="#" id="again">Corrigir minha resposta</a></p>
@@ -248,6 +253,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
     <button id="play" class="px">▶ JOGAR</button>
     <div id="rankBox" class="hide" style="margin-top:14px;display:grid;gap:8px">
       <p class="note" style="margin:0">Você fez <b id="rankScore">0</b> pontos! Salve no ranking:</p>
+      <p class="note" style="margin:0;color:var(--red);font-weight:800">⚠️ O ranking é só do jogo. Para confirmar presença, use o formulário <a href="#rsvp">VOCÊ VEM?</a> lá em cima.</p>
       <div style="display:flex;gap:8px"><input id="rankName" maxlength="24" placeholder="Seu nome" style="flex:1"><button id="rankSave" class="px" style="background:var(--yellow);border:3px solid var(--ink);padding:0 10px;font-size:9px">SALVAR NO RANKING</button></div>
     </div>
     <h3 class="px" style="font-size:11px;margin:18px 0 8px;color:var(--blue)">🏆 RANKING DOS CONVIDADOS</h3>
@@ -403,37 +409,55 @@ peopleBox.addEventListener('click',e=>{ const r=e.target.closest('.person'); if(
   const sg=e.target.closest('.seg button'); if(sg){ r.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b===sg)); r.querySelector('.pa').classList.toggle('hide',sg.dataset.k!=='c'); SFX.click(); calc(); }
   if(e.target.closest('.rm')){ r.remove(); calc(); } });
 $('#addP').onclick=()=>{ personRow({k:'c'}).querySelector('.pn').focus(); SFX.click(); };
-form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({k:'a'}); personRow({k:'c'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({k:'a'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
 
-async function post(payload){
+async function post(payload, tries=3){
   if(!CFG.scriptUrl){ await new Promise(r=>setTimeout(r,700)); return {ok:true, demo:true}; }
-  const r = await fetch(CFG.scriptUrl, {method:'POST', body: JSON.stringify(payload)});
-  return r.json();
+  let last;
+  for(let i=0;i<tries;i++){
+    try{ const ac2=new AbortController(); const t=setTimeout(()=>ac2.abort(),20000);
+      const r = await fetch(CFG.scriptUrl, {method:'POST', body: JSON.stringify(payload), signal:ac2.signal}); clearTimeout(t);
+      const j = await r.json(); return j; }
+    catch(e){ last=e; await new Promise(r=>setTimeout(r,1500*(i+1))); }
+  }
+  throw last||new Error('sem conexão');
 }
+function logEvt(tipo, detalhe){ try{ if(!CFG.scriptUrl) return; fetch(CFG.scriptUrl,{method:'POST',keepalive:true,body:JSON.stringify({action:'log',tipo,nome:(form.nome.value||'').trim(),detalhe:String(detalhe).slice(0,300),user_agent:navigator.userAgent.slice(0,80)})}).catch(()=>{}); }catch(e){} }
 form.onsubmit = async e=>{
   e.preventDefault();
   const fd = new FormData(form); const d = Object.fromEntries(fd.entries());
-  if(!d.nome.trim()){ form.nome.focus(); form.nome.style.outline='3px solid var(--red)'; return; }
-  if(!d.presenca){ alert('Marque SIM ou NÃO, por favor 🙂'); return; }
-  if(d.presenca==='sim'){ calc(); const ps=people(); if(!ps.some(p=>p.n)){ peopleBox.querySelector('.pn')?.focus(); toast('Coloque o nome de quem vem 🙂'); return; } if(ps.some(p=>!p.n)){ const v=[...peopleBox.querySelectorAll('.pn')].find(i=>!i.value.trim()); v.focus(); v.style.outline='3px solid var(--red)'; toast('Falta o nome de uma pessoa (ou toque no ✕ para remover)'); return; } Object.assign(d,{adultos:form.adultos.value,criancas:form.criancas.value,nomes_criancas:form.nomes_criancas.value}); d.people=ps; }
+  const stop=(msg,el)=>{ showErr(msg,false); if(el){ el.focus(); el.style.outline='3px solid var(--red)'; } logEvt('bloqueado',msg); };
+  hideErr();
+  if(!d.nome.trim()) return stop('Escreva seu nome no primeiro campo 🙂', form.nome);
+  if(!d.presenca) return stop('Marque SIM ou NÃO antes de enviar 🙂');
+  if(d.presenca==='sim'){ [...peopleBox.children].forEach(r=>{ if(!r.querySelector('.pn').value.trim() && peopleBox.children.length>1) r.remove(); }); calc(); const ps=people().filter(p=>p.n);
+    if(!ps.length) return stop('Coloque o nome de pelo menos uma pessoa que vem (pode ser você) 🙂', peopleBox.querySelector('.pn'));
+    Object.assign(d,{adultos:form.adultos.value,criancas:form.criancas.value,nomes_criancas:form.nomes_criancas.value}); d.people=ps; }
   if(d.presenca==='nao'){ d.adultos=0; d.criancas=0; d.nomes_criancas=''; d.restricao=''; }
   d.convidado_link = convidado; d.user_agent = navigator.userAgent.slice(0,80);
   const btn=$('#submit'); btn.disabled=true; btn.textContent='SALVANDO…';
   try{
     const res = await post({action:'rsvp', ...d});
     if(!res.ok) throw new Error(res.error||'erro');
-    localStorage.setItem('vitor4_rsvp', JSON.stringify(d));
+    d.protocolo=res.protocolo; d.quando=res.quando;
+    try{ localStorage.setItem('vitor4_rsvp', JSON.stringify(d)); }catch(e){}
     showDone(d, res.demo);
   }catch(err){
-    btn.disabled=false; btn.textContent='ENVIAR RESPOSTA ▶';
-    alert('Não consegui salvar agora. Tente de novo em instantes ou avise pelo WhatsApp. ('+err.message+')');
+    btn.disabled=false; btn.textContent='TENTAR DE NOVO ▶';
+    logEvt('falha-envio', err && err.message);
+    showErr('⚠️ Sua resposta NÃO foi registrada (sem conexão ou instabilidade). Toque em "TENTAR DE NOVO". Se continuar, use o botão abaixo para avisar pelo WhatsApp.', true, d);
   }
 };
+function showErr(msg, wa, d){ $('#errMsg').textContent=msg; $('#errBox').classList.remove('hide'); const w=$('#errWa');
+  if(wa){ const txt=`Oi! Tentei confirmar no convite do Vitor e deu erro. Minha resposta: ${d.nome} — ${d.presenca==='sim'?'VAMOS':'não vamos'}${d.presenca==='sim'?`: ${(d.people||[]).map(p=>p.n).join(', ')}`:''}.`; w.href=`https://wa.me/${CFG.whatsapp||''}?text=${encodeURIComponent(txt)}`; w.classList.remove('hide'); } else w.classList.add('hide');
+  $('#errBox').scrollIntoView({behavior:'smooth',block:'center'}); }
+function hideErr(){ $('#errBox').classList.add('hide'); }
 function showDone(d, demo){
   form.classList.add('hide'); $('#done').classList.remove('hide');
   const sim = d.presenca==='sim';
   $('#doneEmoji').textContent = sim?'🎉':'💙';
-  $('#doneTitle').textContent = sim?'PRESENÇA CONFIRMADA!':'QUE PENA! FICA PRA PRÓXIMA';
+  $('#doneTitle').textContent = sim?'✅ PRESENÇA CONFIRMADA!':'RESPOSTA REGISTRADA';
+  $('#proto').innerHTML = d.protocolo ? `Registrado com sucesso na lista da festa<br><b>Protocolo nº ${d.protocolo}</b> · ${d.quando||''}` : '';
   $('#doneText').textContent = sim
     ? `${d.nome}, o Vitor já está contando com ${d.adultos} adulto(s) e ${d.criancas} criança(s): ${(d.people||[]).map(p=>p.n).join(', ')}. Até dia 24!`
     : `${d.nome}, obrigado por avisar. O Vitor manda um abraço!`
@@ -446,7 +470,7 @@ function showDone(d, demo){
   $('#rsvp').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#again').onclick = e=>{ e.preventDefault(); $('#done').classList.add('hide'); form.classList.remove('hide'); $('#submit').disabled=false; $('#submit').textContent='ENVIAR RESPOSTA ▶'; };
-try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } (prev.people||[]).forEach(p=>personRow(p)); } }catch(e){}
+try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev && prev.protocolo){ const a=$('#already'); a.innerHTML=`✅ <b>${prev.nome}</b>, sua resposta já está registrada (protocolo nº ${prev.protocolo}${prev.quando?' · '+prev.quando:''}). Se precisar mudar algo, é só enviar de novo.`; a.classList.remove('hide'); } if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } (prev.people||[]).forEach(p=>personRow(p)); } }catch(e){}
 
 /* ---------- Presentes ---------- */
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),4000); }
