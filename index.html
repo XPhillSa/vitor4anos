@@ -572,9 +572,11 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
   function down(e){ if(e&&e.cancelable) e.preventDefault(); hold=true; if(state==='title'||state==='over'){ startGame(); return; } jumpBuf=8; }
   function up(){ hold=false; }
   cv.addEventListener('pointerdown',down); addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
-  addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='ArrowUp') && document.activeElement===document.body && cv.getBoundingClientRect().top<innerHeight){ if(state==='play'||state==='count'){ e.preventDefault(); if(!hold) down(); } } });
-  addEventListener('keyup',e=>{ if(e.code==='Space'||e.code==='ArrowUp') up(); });
-  $('#play').onclick=()=>startGame();
+  const isJumpKey=e=>['Space','ArrowUp','KeyW','Enter'].includes(e.code);
+  addEventListener('keydown',e=>{ const tag=(e.target.tagName||'').toLowerCase(); if(tag==='input'||tag==='textarea') return;
+    if(isJumpKey(e) && (state==='play'||state==='count')){ e.preventDefault(); e.stopPropagation(); if(!hold){ hold=true; jumpBuf=8; } } },true);
+  addEventListener('keyup',e=>{ if(isJumpKey(e)) up(); },true);
+  $('#play').onclick=()=>{ $('#play').blur(); if(state==='play'||state==='count'||state==='win') return; startGame(); };
   function startGame(){ ac(); window.__inGame=true; Music.play('game'); reset(); state='count'; time0=performance.now(); lastT=time0; $('#play').textContent='JOGANDO…'; $('#rankBox').classList.add('hide'); requestAnimationFrame(loop); }
 
   /* ---------- efeitos ---------- */
@@ -599,7 +601,8 @@ function confetti(n){ const cols=['#e52521','#fbd000','#049cd8','#43b047','#fff'
     P.vy+=0.52*dt; if(P.vy>10) P.vy=10;
     // horizontal x sólidos
     const sol=pipes.concat(blocks);
-    for(const s of sol){ if(ov(P,s) && P.y+P.h>s.y+8 && P.y<s.y+s.h-6){ P.x=s.x-P.w; } }
+    let blocked=false; for(const s of sol){ if(ov(P,s) && P.y+P.h>s.y+8 && P.y<s.y+s.h-6){ P.x=s.x-P.w; blocked=true; } }
+    P.stuck = blocked && P.on ? (P.stuck||0)+dt : 0; if(P.stuck>40){ jumpBuf=8; hold=true; setTimeout(()=>{ hold=false; },260); P.stuck=0; }
     // vertical
     const wasOn=P.on; P.y+=P.vy*dt; P.on=false;
     if(P.y+P.h>=G){ P.y=G-P.h; if(P.vy>3&&!wasOn) burst(P.x+9,G-2,'#d9c3a0',5,1); P.vy=0; P.on=true; }
