@@ -68,15 +68,28 @@ async function load(){
   $('#go').textContent='🔄 Atualizar';
 }
 function people(r){ const s=String(r['Quem vem']||r['Nomes das crianças']||''); return s?s.split(/;\s*/).filter(Boolean):[]; }
+/* Contagem real: quem respondeu + acompanhantes (sem contar duas vezes quem se colocou na lista) */
+const TIT=/^(tia|tio|titia|titio|vov[óoô]|v[óoô]|dindo|dinda|madrinha|padrinho|prima|primo|fam[ií]lia)\s+/i;
+const nn=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\(.*?\)/g,'').replace(/\d+\s*anos?/g,'').trim();
+const core=t=>nn(t).replace(TIT,'').trim();
+function head(r){ // devolve {ad, cr, extra} — extra = quem respondeu, quando não estava na lista
+  const ps=people(r), novo=ps.some(p=>/\((adulto|crian)/.test(p));
+  let ad=+r['Adultos']||0, cr=+r['Crianças']||0, extra=[];
+  if(novo){ ad=ps.filter(p=>/\(adulto\)/.test(p)).length; cr=ps.filter(p=>/\(crian/.test(p)).length;
+    const nome=String(r['Nome']||''); if(!/^fam[ií]lia/i.test(nome.trim())){
+      const listed=ps.map(core); nome.split(/\s+e\s+|,|&/i).map(x=>x.trim()).filter(Boolean).forEach(pn=>{ const c=core(pn); if(c && !listed.some(l=>l===c||l.split(' ')[0]===c.split(' ')[0])) extra.push(pn); }); }
+    ad+=extra.length; }
+  return {ad,cr,extra};
+}
 function render(){
-  const sim=ROWS.filter(r=>r['Presença']==='SIM'), ad=sim.reduce((a,r)=>a+(+r['Adultos']||0),0), cr=sim.reduce((a,r)=>a+(+r['Crianças']||0),0);
+  const sim=ROWS.filter(r=>r['Presença']==='SIM'), hs=sim.map(head), ad=hs.reduce((a,h)=>a+h.ad,0), cr=hs.reduce((a,h)=>a+h.cr,0);
   $('#kpi').innerHTML=[['PESSOAS',ad+cr],['ADULTOS',ad],['CRIANÇAS',cr],['FAMÍLIAS SIM',sim.length],['NÃO VÊM',ROWS.length-sim.length],['RESTRIÇÕES',sim.filter(r=>r['Restrição alimentar']&&!/^n(ã|a)o$/i.test(String(r['Restrição alimentar']).trim())).length]]
     .map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join('');
   const q=$('#q').value.toLowerCase();
   const rows=ROWS.filter(r=>(F==='all'||(F==='sim'?r['Presença']==='SIM':r['Presença']!=='SIM')) && (!q||(String(r['Nome'])+' '+people(r).join(' ')).toLowerCase().includes(q)));
   $('#list').innerHTML=rows.map(r=>{ const s=r['Presença']==='SIM', ps=people(r), rest=String(r['Restrição alimentar']||'').trim(), tel=String(r['Telefone']||'').replace(/^'/,'');
-    return `<div class="card ${s?'':'nao'}"><h3>${esc(r['Nome'])}<span>${s?`✅ ${(+r['Adultos']||0)+(+r['Crianças']||0)} pessoa(s)`:'❌ não vem'}</span></h3>
-      ${ps.length?`<ul>${ps.map(p=>`<li>${/criança/.test(p)?'🧒':'🧑'} ${esc(p.replace(/\s*\((adulto)\)/,''))}</li>`).join('')}</ul>`:''}
+    const h=head(r); return `<div class="card ${s?'':'nao'}"><h3>${esc(r['Nome'])}<span>${s?`✅ ${h.ad+h.cr} pessoa${h.ad+h.cr===1?'':'s'}`:'❌ não vem'}</span></h3>
+      ${(h.extra.length||ps.length)?`<ul>${h.extra.map(x=>`<li>🧑 ${esc(x)} <small style="color:#888">(respondeu)</small></li>`).join('')}${ps.map(p=>`<li>${/criança/.test(p)?'🧒':'🧑'} ${esc(p.replace(/\s*\((adulto)\)/,''))}</li>`).join('')}</ul>`:''}
       ${rest&&!/^n(ã|a)o$/i.test(rest)?`<div class="alert">⚠️ ${esc(rest)}</div>`:''}
       <div class="meta">${r['Recado']?`<span>💬 ${esc(r['Recado'])}</span>`:''}${tel?`<span>📱 <a href="https://wa.me/${tel.replace(/\D/g,'')}">${esc(tel)}</a></span>`:''}<span>🕒 ${new Date(r['Data/Hora']).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div></div>`; }).join('') || '<p class="muted">Nenhuma resposta aqui ainda.</p>';
 }

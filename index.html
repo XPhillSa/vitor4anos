@@ -206,7 +206,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
       </div>
       <p class="note" id="ynHint" style="margin:-4px 0 0">Marcando <b>SIM</b>, você informa logo abaixo quem da família vem.</p>
       <div id="detalhes" class="hide" style="display:grid;gap:12px">
-        <div class="px" style="font-size:11px;color:var(--blue)">QUEM VEM COM VOCÊ?</div>
+        <div class="px" style="font-size:11px;color:var(--blue);line-height:1.6">QUEM VEM? (COLOQUE TODOS, INCLUSIVE VOCÊ)</div>
         <div id="people" style="display:grid;gap:10px"></div>
         <button type="button" id="addP" class="px addp">+ ADICIONAR PESSOA</button>
         <div class="tot" id="tot"></div>
@@ -456,7 +456,7 @@ peopleBox.addEventListener('click',e=>{ const r=e.target.closest('.person'); if(
   const sg=e.target.closest('.seg button'); if(sg){ r.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b===sg)); r.querySelector('.pa').classList.toggle('hide',sg.dataset.k!=='c'); SFX.click(); calc(); }
   if(e.target.closest('.rm')){ r.remove(); calc(); } });
 $('#addP').onclick=()=>{ personRow({k:'c'}).querySelector('.pn').focus(); SFX.click(); };
-form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({k:'a'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({n:form.nome.value.trim(),k:'a'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
 
 async function post(payload, tries=3){
   if(!CFG.scriptUrl){ await new Promise(r=>setTimeout(r,700)); return {ok:true, demo:true}; }
