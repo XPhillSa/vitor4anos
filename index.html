@@ -135,10 +135,14 @@ input:focus,textarea:focus{outline:3px solid var(--yellow)}
 .like{display:flex;align-items:center;gap:10px;background:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:12px;font-weight:800;font-size:15px;line-height:1.2}
 .like span{font-size:28px;flex:none}
 .like:nth-child(4n+1){background:#ffe3e2}.like:nth-child(4n+2){background:#fff4c2}.like:nth-child(4n+3){background:#dff7e0}.like:nth-child(4n){background:#dcefff}
-.person{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:10px}
-.person .pn{grid-column:1/2;padding:10px}.person .rm{grid-column:2;grid-row:1;width:36px;height:36px;background:#ffe3e2;border:3px solid var(--ink);font-weight:800}
-.seg{display:flex;grid-column:1/2}.seg button{flex:1;padding:9px 6px;font-weight:800;background:#eee;border:3px solid var(--ink)}.seg button+button{border-left:0}.seg button.on{background:var(--green);color:#fff}
-.person .pa{grid-column:2;grid-row:2;width:84px;padding:9px}
+.me{display:flex;align-items:center;gap:10px;background:#dff7e0;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:10px 12px;font-weight:800}
+.me .ic,.person .ic{font-size:26px}.me small{display:block;font-weight:600;color:#2f6b38}
+.ctr{display:flex;align-items:center;gap:10px;background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:10px 12px}
+.ctr .lb{flex:1;font-weight:800;line-height:1.2}.ctr .lb small{display:block;font-weight:600;color:#666;font-size:13px}
+.ctr button{width:48px;height:48px;font-size:26px;font-weight:900;border:3px solid var(--ink);background:#eee;line-height:1}
+.ctr button.plus{background:var(--green);color:#fff}.ctr b{min-width:30px;text-align:center;font-size:24px}
+.person{display:flex;gap:8px;align-items:center;background:#fff;border:3px solid var(--ink);padding:8px 10px}
+.person.c{background:#fff8d6}.person .pn{flex:1;min-width:0;padding:10px}.person .pa{width:96px;padding:10px 4px}
 .addp{background:var(--yellow);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:12px;font-size:10px}
 .tot{text-align:center;font-weight:800;background:#dff7e0;border:3px dashed var(--green);padding:10px}
 .errbox{background:#ffe3e2;border:3px solid var(--red);padding:12px;font-weight:800;color:#9e1b18;display:grid;gap:10px}
@@ -198,7 +202,7 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
     <h2 class="px">VOCÊ VEM?</h2>
     <div id="already" class="proto hide"></div>
     <form id="form" novalidate>
-      <label>Seu nome <input name="nome" required placeholder="Ex.: Família Silva ou Ana e João" autocomplete="name"></label>
+      <label>Seu nome <input name="nome" required placeholder="Ex.: Ana Paula" autocomplete="name"></label>
       <label>WhatsApp (para a gente avisar novidades) <input name="telefone" type="tel" inputmode="tel" placeholder="(31) 9 9999-9999" autocomplete="tel"></label>
       <div class="yn">
         <label><input type="radio" name="presenca" value="sim" required><span>✅ SIM, vamos!</span></label>
@@ -206,9 +210,12 @@ footer{text-align:center;color:#fff;font-size:10px;padding:20px 0 40px;text-shad
       </div>
       <p class="note" id="ynHint" style="margin:-4px 0 0">Marcando <b>SIM</b>, você informa logo abaixo quem da família vem.</p>
       <div id="detalhes" class="hide" style="display:grid;gap:12px">
-        <div class="px" style="font-size:11px;color:var(--blue);line-height:1.6">QUEM VEM? (COLOQUE TODOS, INCLUSIVE VOCÊ)</div>
-        <div id="people" style="display:grid;gap:10px"></div>
-        <button type="button" id="addP" class="px addp">+ ADICIONAR PESSOA</button>
+        <div class="px" style="font-size:11px;color:var(--blue);line-height:1.6">QUANTAS PESSOAS VÊM?</div>
+        <div class="me"><span class="ic">🙋</span><div>Você: <span id="meName">—</span><small>já está contado(a) ✔</small></div></div>
+        <div class="ctr"><div class="lb">👨 Mais adultos<small>além de você</small></div><button type="button" data-k="a" data-d="-1" aria-label="Menos adulto">−</button><b id="nA">0</b><button type="button" class="plus" data-k="a" data-d="1" aria-label="Mais adulto">+</button></div>
+        <div id="listA" style="display:grid;gap:8px"></div>
+        <div class="ctr"><div class="lb">🧒 Crianças<small>coloque nome e idade</small></div><button type="button" data-k="c" data-d="-1" aria-label="Menos criança">−</button><b id="nC">0</b><button type="button" class="plus" data-k="c" data-d="1" aria-label="Mais criança">+</button></div>
+        <div id="listC" style="display:grid;gap:8px"></div>
         <div class="tot" id="tot"></div>
         <input type="hidden" name="adultos" value="0"><input type="hidden" name="criancas" value="0"><input type="hidden" name="nomes_criancas" value="">
         <label>Alguma alergia ou restrição alimentar? <input name="restricao" placeholder="Ex.: Pedro tem alergia a amendoim"></label>
@@ -437,26 +444,26 @@ $('#ics').href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
 /* ---------- RSVP ---------- */
 const form=$('#form');
 form.addEventListener('change', e=>{ if(e.target.name==='presenca'){ $('#detalhes').classList.toggle('hide', e.target.value!=='sim'); $('#ynHint').classList.toggle('hide', e.target.value==='sim'); SFX.click(); } });
-/* lista de quem vem */
-const peopleBox=$('#people');
-function personRow(p={}){ const d=document.createElement('div'); d.className='person';
-  d.innerHTML=`<input class="pn" placeholder="Nome da pessoa" maxlength="40" value="${(p.n||'').replace(/"/g,'&quot;')}">
-    <div class="seg"><button type="button" data-k="a" class="${p.k!=='c'?'on':''}">Adulto</button><button type="button" data-k="c" class="${p.k==='c'?'on':''}">Criança</button></div>
-    <input class="pa ${p.k==='c'?'':'hide'}" type="number" inputmode="numeric" min="0" max="17" placeholder="Idade" value="${p.a||''}">
-    <button type="button" class="rm" title="Remover">✕</button>`;
-  peopleBox.appendChild(d); calc(); return d; }
-function people(){ return [...peopleBox.children].map(r=>({n:r.querySelector('.pn').value.trim(), k:r.querySelector('.seg .on').dataset.k, a:r.querySelector('.pa').value})); }
+/* quem vem: você + contadores de adultos e crianças */
+const listA=$('#listA'), listC=$('#listC');
+const AGE=['Idade','bebê (0)',...Array.from({length:17},(_,i)=>`${i+1} ano${i?'s':''}`)];
+function personRow(p={}){ const box=p.k==='c'?listC:listA, d=document.createElement('div'); d.className='person '+(p.k==='c'?'c':'');
+  const n=box.children.length+1;
+  d.innerHTML=`<span class="ic">${p.k==='c'?'🧒':'👨'}</span><input class="pn" placeholder="Nome" maxlength="40" value="${(p.n||'').replace(/"/g,'&quot;')}">`+
+    (p.k==='c'?`<select class="pa">${AGE.map((t,i)=>`<option value="${i?i-1:''}"${String(p.a)===String(i-1)&&p.a!==''?' selected':''}>${t}</option>`).join('')}</select>`:'');
+  box.appendChild(d); calc(); return d; }
+function rowsOf(box,k){ return [...box.children].map((r,i)=>({n:r.querySelector('.pn').value.trim(), k, a:k==='c'?r.querySelector('.pa').value:''})); }
+function people(){ const me=form.nome.value.trim(); return [{n:me||'Eu',k:'a',me:true}, ...rowsOf(listA,'a'), ...rowsOf(listC,'c')]; }
+function fmtP(p){ const n=p.n||(p.k==='c'?'Criança sem nome':'Adulto sem nome'); return p.k==='c'?`${n} (criança${p.a!==''&&p.a!=null?', '+(p.a==='0'?'bebê':p.a+' anos'):''})`:`${n} (adulto)`; }
 function calc(){ const ps=people(); const ad=ps.filter(p=>p.k==='a').length, cr=ps.filter(p=>p.k==='c').length;
-  form.adultos.value=ad; form.criancas.value=cr;
-  form.nomes_criancas.value=ps.filter(p=>p.n).map(p=>p.k==='c'?`${p.n} (criança${p.a?', '+p.a+' anos':''})`:`${p.n} (adulto)`).join('; ');
-  $('#tot').innerHTML=`<b>${ad}</b> adulto${ad===1?'':'s'} + <b>${cr}</b> criança${cr===1?'':'s'} = <b>${ad+cr}</b> pessoa${ad+cr===1?'':'s'}`;
-  peopleBox.querySelectorAll('.rm').forEach(b=>b.style.visibility=peopleBox.children.length>1?'visible':'hidden'); }
-peopleBox.addEventListener('input',calc);
-peopleBox.addEventListener('click',e=>{ const r=e.target.closest('.person'); if(!r) return;
-  const sg=e.target.closest('.seg button'); if(sg){ r.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b===sg)); r.querySelector('.pa').classList.toggle('hide',sg.dataset.k!=='c'); SFX.click(); calc(); }
-  if(e.target.closest('.rm')){ r.remove(); calc(); } });
-$('#addP').onclick=()=>{ personRow({k:'c'}).querySelector('.pn').focus(); SFX.click(); };
-form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ if(!peopleBox.children.length){ personRow({n:form.nome.value.trim(),k:'a'}); } setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
+  form.adultos.value=ad; form.criancas.value=cr; form.nomes_criancas.value=ps.map(fmtP).join('; ');
+  $('#nA').textContent=listA.children.length; $('#nC').textContent=cr; $('#meName').textContent=form.nome.value.trim()||'(escreva seu nome lá em cima)';
+  $('#tot').innerHTML=`Total: <b>${ad+cr}</b> pessoa${ad+cr===1?'':'s'} — ${ad} adulto${ad===1?'':'s'} (com você) + ${cr} criança${cr===1?'':'s'}`; }
+document.querySelectorAll('.ctr button').forEach(b=>b.onclick=()=>{ const k=b.dataset.k, box=k==='c'?listC:listA;
+  if(b.dataset.d==='1'){ if(box.children.length>=15) return; personRow({k}).querySelector('.pn').focus({preventScroll:true}); }
+  else if(box.lastElementChild){ box.lastElementChild.remove(); calc(); } SFX.click(); });
+listA.addEventListener('input',calc); listC.addEventListener('input',calc); listC.addEventListener('change',calc); form.nome.addEventListener('input',calc);
+form.addEventListener('change', e=>{ if(e.target.name==='presenca'&&e.target.value==='sim'){ calc(); setTimeout(()=>$('#detalhes').scrollIntoView({behavior:'smooth',block:'start'}),100); } });
 
 async function post(payload, tries=3){
   if(!CFG.scriptUrl){ await new Promise(r=>setTimeout(r,700)); return {ok:true, demo:true}; }
@@ -477,8 +484,7 @@ form.onsubmit = async e=>{
   hideErr();
   if(!d.nome.trim()) return stop('Escreva seu nome no primeiro campo 🙂', form.nome);
   if(!d.presenca) return stop('Marque SIM ou NÃO antes de enviar 🙂');
-  if(d.presenca==='sim'){ [...peopleBox.children].forEach(r=>{ if(!r.querySelector('.pn').value.trim() && peopleBox.children.length>1) r.remove(); }); calc(); const ps=people().filter(p=>p.n);
-    if(!ps.length) return stop('Coloque o nome de pelo menos uma pessoa que vem (pode ser você) 🙂', peopleBox.querySelector('.pn'));
+  if(d.presenca==='sim'){ calc(); const ps=people();
     Object.assign(d,{adultos:form.adultos.value,criancas:form.criancas.value,nomes_criancas:form.nomes_criancas.value}); d.people=ps; }
   if(d.presenca==='nao'){ d.adultos=0; d.criancas=0; d.nomes_criancas=''; d.restricao=''; }
   d.convidado_link = convidado; d.user_agent = navigator.userAgent.slice(0,80);
@@ -517,7 +523,7 @@ function showDone(d, demo){
   $('#rsvp').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#again').onclick = e=>{ e.preventDefault(); $('#done').classList.add('hide'); form.classList.remove('hide'); $('#submit').disabled=false; $('#submit').textContent='ENVIAR RESPOSTA ▶'; };
-try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev && prev.protocolo){ const a=$('#already'); a.innerHTML=`✅ <b>${prev.nome}</b>, sua resposta já está registrada (protocolo nº ${prev.protocolo}${prev.quando?' · '+prev.quando:''}). Se precisar mudar algo, é só enviar de novo.`; a.classList.remove('hide'); } if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } (prev.people||[]).forEach(p=>personRow(p)); } }catch(e){}
+try{ const prev=JSON.parse(localStorage.getItem('vitor4_rsvp')); if(prev && prev.protocolo){ const a=$('#already'); a.innerHTML=`✅ <b>${prev.nome}</b>, sua resposta já está registrada (protocolo nº ${prev.protocolo}${prev.quando?' · '+prev.quando:''}). Se precisar mudar algo, é só enviar de novo.`; a.classList.remove('hide'); } if(prev){ Object.entries(prev).forEach(([k,v])=>{ if(form[k] && form[k].type!=='radio') form[k].value=v; }); const r=form.querySelector(`[name=presenca][value=${prev.presenca}]`); if(r){ r.checked=true; $('#detalhes').classList.toggle('hide', prev.presenca!=='sim'); } (prev.people||[]).forEach(p=>{ if(p.me || (p.n && p.n===prev.nome)) return; personRow(p); }); } }catch(e){}
 
 /* ---------- Presentes ---------- */
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),4000); }
