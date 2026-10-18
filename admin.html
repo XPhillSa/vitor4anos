@@ -12,7 +12,8 @@ body{font-family:Nunito,system-ui,sans-serif;background:#1b1b2f;color:#eee;paddi
 .wrap{max-width:720px;margin:0 auto}
 h1{font-size:13px;color:#fbd000;margin:4px 0 14px;line-height:1.6}
 .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.kpi div{background:#2a2a45;border:3px solid #fff2;padding:12px 6px;text-align:center}
+.kpi div{background:#2a2a45;border:3px solid #fff2;padding:12px 6px;text-align:center;cursor:pointer;user-select:none}.kpi div.on{background:#fbd000;border-color:#fff}.kpi div.on b,.kpi div.on small{color:#1b1b2f}.kpi div::after{content:"▾";display:block;font-size:11px;opacity:.5;margin-top:4px}.kpi div.on::after{content:"▴"}
+#kdet{background:#fff8e7;color:#1b1b2f;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px 14px;margin:-6px 0 14px}#kdet h4{font-size:13px;margin-bottom:8px;color:#e52521}#kdet ul{list-style:none;display:grid;gap:4px;font-size:15px}#kdet li small{color:#666}
 .kpi b{display:block;font-size:26px;color:#fbd000;line-height:1.1}
 .kpi small{font-size:11px;font-weight:800;letter-spacing:.5px;line-height:1.3;display:block;margin-top:6px}
 .bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
@@ -42,6 +43,10 @@ th,td{padding:8px 6px;border-bottom:1px solid #ddd;text-align:left;font-size:14p
 td.n,th.n{text-align:right;white-space:nowrap}td b{font-size:16px}td small{display:block;color:#666;font-weight:600}
 .buy{background:#dff7e0!important;font-weight:900}
 .fonte{font-size:12px;opacity:.7;line-height:1.5}
+.sw{display:flex;gap:8px;align-items:center;font-weight:800;cursor:pointer}.sw input{width:22px;height:22px;margin:0;padding:0}tr.off td{opacity:.45}tr.off td.buy{background:#eee!important}
+.pr{width:78px;padding:6px 4px;font-size:14px;background:#fff;color:#1b1b2f;border:2px solid #999}
+.tot{background:#dff7e0;color:#1b1b2f;border:3px dashed #43b047;padding:10px 12px;font-weight:800;margin-bottom:12px;text-align:center;font-size:16px}.tot b{font-size:22px;color:#2f8a3a}.tot small{display:block;font-weight:600;color:#555;font-size:12px}
+#avisos{background:#fff3c2;color:#1b1b2f;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px 14px;margin-bottom:12px}#avisos h4{font-size:13px;margin-bottom:8px;color:#9a6b00}#avisos ul{list-style:none;display:grid;gap:5px;font-size:14px}#avisos li small{color:#666}
 </style>
 </head>
 <body><div class="wrap">
@@ -54,7 +59,7 @@ td.n,th.n{text-align:right;white-space:nowrap}td b{font-size:16px}td small{displ
 </div>
 
 <div id="app" class="hide">
-  <div class="kpi" id="kpi"></div>
+  <div class="kpi" id="kpi"></div><div id="kdet" class="hide"></div><div id="avisos" class="hide"></div>
   <div class="bar"><button class="b-red" id="go" style="flex:1">🔄 Atualizar</button><button class="b-blue" id="csv">⬇ CSV</button></div>
   <div class="tabs"><button data-f="sim" class="on">Vêm</button><button data-f="nao">Não vêm</button><button data-f="all">Todos</button><button data-f="buy">🛒 Compras</button></div>
   <input id="q" placeholder="Buscar nome…" style="width:100%;margin-bottom:12px">
@@ -86,15 +91,32 @@ function head(r){ // devolve {ad, cr, extra} — extra = quem respondeu, quando 
   let ad=+r['Adultos']||0, cr=+r['Crianças']||0, extra=[];
   if(novo){ ad=ps.filter(p=>/\(adulto\)/.test(p)).reduce((a,p)=>a+(/\s(e|&)\s/i.test(nn(p))?2:1),0); cr=ps.filter(p=>/\(crian/.test(p)).length;
     const nome=String(r['Nome']||''); if(!/^fam[ií]lia/i.test(nome.trim())){
-      const listed=ps.map(core); nome.split(/\s+e\s+|,|&/i).map(x=>x.trim()).filter(Boolean).forEach(pn=>{ const c=core(pn); if(c && !listed.some(l=>l===c||l.split(' ')[0]===c.split(' ')[0])) extra.push(pn); }); }
+      const listed=ps.flatMap(p=>nn(p).split(/\s(?:e|&)\s/i).map(x=>x.replace(TIT,'').trim())); nome.split(/\s+e\s+|,|&/i).map(x=>x.trim()).filter(Boolean).forEach(pn=>{ const c=core(pn); if(c && !listed.some(l=>l===c||l.split(' ')[0]===c.split(' ')[0])) extra.push(pn); }); }
     ad+=extra.length; }
   return {ad,cr,extra};
 }
 function render(){
   const sim=ROWS.filter(r=>r['Presença']==='SIM'), hs=sim.map(head), ad=hs.reduce((a,h)=>a+h.ad,0), cr=hs.reduce((a,h)=>a+h.cr,0);
-  $('#kpi').innerHTML=[['PESSOAS',ad+cr],['ADULTOS',ad],['CRIANÇAS',cr],['FAMÍLIAS SIM',sim.length],['NÃO VÊM',ROWS.length-sim.length],['RESTRIÇÕES',sim.filter(r=>r['Restrição alimentar']&&!/^n(ã|a)o$/i.test(String(r['Restrição alimentar']).trim())).length]]
-    .map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join('');
-  $('#buy').classList.toggle('hide',F!=='buy'); $('#list').classList.toggle('hide',F==='buy'); $('#q').classList.toggle('hide',F==='buy'); if(F==='buy'){ renderBuy(); return; }
+  const isRest=r=>r['Restrição alimentar']&&!/^n(ã|a)o$/i.test(String(r['Restrição alimentar']).trim());
+  const L={ad:[],cr:[],fam:[],nao:[],rest:[]};
+  sim.forEach(r=>{ const h=head(r), fam=esc(r['Nome']); h.extra.forEach(x=>L.ad.push(`${esc(x)} <small>· ${fam}</small>`));
+    const ps0=people(r), novo0=ps0.some(p=>/\((adulto|crian)/.test(p)); if(!novo0){ String(r['Nome']).split(/\s+e\s+|,|&/i).map(x=>x.trim()).filter(Boolean).slice(0,+r['Adultos']||1).forEach(x=>L.ad.push(`${esc(x)} <small>· ${fam}</small>`)); ps0.forEach(p=>L.cr.push(`${esc(p)} <small>· ${fam}</small>`)); }
+    else ps0.forEach(p=>{ const nm=esc(p.replace(/\s*\((adulto|crian[^)]*)\)/,'')); if(/\(crian/.test(p)){ const m=p.match(/\(crian[^)]*?,\s*([^)]+)\)/); L.cr.push(`${nm} <small>· ${m?m[1]:'idade?'} · ${fam}</small>`); } else nm.split(/\s+(?:e|&)\s+/i).forEach(x=>L.ad.push(`${x} <small>· ${fam}</small>`)); });
+    L.fam.push(`${fam} <small>· ${h.ad+h.cr} pessoa${h.ad+h.cr===1?'':'s'}</small>`); if(isRest(r)) L.rest.push(`⚠️ ${esc(r['Restrição alimentar'])} <small>· ${fam}</small>`); });
+  ROWS.filter(r=>r['Presença']!=='SIM').forEach(r=>L.nao.push(esc(r['Nome'])));
+  KD={pes:['Todas as pessoas',[...L.ad,...L.cr]],ad:['Adultos',L.ad],cr:['Crianças',L.cr],fam:['Famílias que confirmaram',L.fam],nao:['Não vêm',L.nao],rest:['Restrições alimentares',L.rest]};
+  $('#kpi').innerHTML=[['PESSOAS',ad+cr,'pes'],['ADULTOS',ad,'ad'],['CRIANÇAS',cr,'cr'],['FAMÍLIAS SIM',sim.length,'fam'],['NÃO VÊM',ROWS.length-sim.length,'nao'],['RESTRIÇÕES',L.rest.length,'rest']]
+    .map(([l,v,k])=>`<div data-k="${k}" class="${KO===k?'on':''}"><b>${v}</b><small>${l}</small></div>`).join('');
+  showK();
+  // Avisos: tudo que precisa de atenção
+  const AV=[]; const now=Date.now(), dia=86400000;
+  const rec=ROWS.filter(r=>now-new Date(r['Data/Hora']).getTime()<dia); if(rec.length) AV.push(`🆕 <b>${rec.length}</b> resposta(s) nas últimas 24 h: ${rec.map(r=>esc(r['Nome'])).join(', ')}`);
+  L.rest.forEach(x=>AV.push(x));
+  sim.forEach(r=>{ const ps=people(r); if(ps.some(p=>/sem nome/i.test(p))) AV.push(`✏️ ${esc(r['Nome'])} não escreveu o nome de quem vem junto <small>· conferir</small>`); if(ps.some(p=>/\(adulto\)/.test(p)&&/\s(e|&)\s/i.test(nn(p)))) AV.push(`👀 ${esc(r['Nome'])} cadastrou duas pessoas em um nome só <small>· contado como 2</small>`); if(ps.some(p=>/\(crian/.test(p)&&!/ano|beb/.test(p))) AV.push(`🎂 ${esc(r['Nome'])}: criança sem idade informada`); });
+  const semTel=sim.filter(r=>!String(r['Telefone']||'').replace(/\D/g,'')).length; if(semTel) AV.push(`📵 ${semTel} família(s) sem WhatsApp cadastrado`);
+  const prazo=new Date('2026-10-17T23:59:59-03:00'), fest=new Date('2026-10-24T16:00:00-03:00'); const dd=Math.ceil((fest-now)/dia); AV.push(now>prazo?`⏰ Prazo de confirmação encerrou (17/10). Festa em <b>${dd}</b> dia(s).`:`⏰ Prazo de confirmação: 17/10. Festa em <b>${dd}</b> dia(s).`);
+  $('#avisos').classList.toggle('hide',F==='buy'); $('#avisos').innerHTML=`<h4>📣 AVISOS (${AV.length})</h4><ul>${AV.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  $('#buy').classList.toggle('hide',F!=='buy'); $('#list').classList.toggle('hide',F==='buy'); $('#q').classList.toggle('hide',F==='buy'); if(F==='buy'){ $('#kdet').classList.add('hide'); $('#avisos').classList.add('hide'); renderBuy(); return; }
   const q=$('#q').value.toLowerCase();
   const rows=ROWS.filter(r=>(F==='all'||(F==='sim'?r['Presença']==='SIM':r['Presença']!=='SIM')) && (!q||(String(r['Nome'])+' '+people(r).join(' ')).toLowerCase().includes(q)));
   $('#list').innerHTML=rows.map(r=>{ const s=r['Presença']==='SIM', ps=people(r), rest=String(r['Restrição alimentar']||'').trim(), tel=String(r['Telefone']||'').replace(/^'/,'');
@@ -104,50 +126,64 @@ function render(){
       <div class="meta">${r['Recado']?`<span>💬 ${esc(r['Recado'])}</span>`:''}${tel?`<span>📱 <a href="https://wa.me/${tel.replace(/\D/g,'')}">${esc(tel)}</a></span>`:''}<span>🕒 ${new Date(r['Data/Hora']).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div></div>`; }).join('') || '<p class="muted">Nenhuma resposta aqui ainda.</p>';
 }
 /* ---------- Compras: estudo de consumo (fontes: Receiteria; Guia da Semana/bufê infantil) ---------- */
-const PD={extraA:10,extraC:4,marg:10,beer:50,seat:100};
+const PD={extraA:10,extraC:4,marg:10,beer:50,seat:100,lemb:'c',priceSet:0};
 let P=Object.assign({},PD); try{ Object.assign(P,JSON.parse(localStorage.getItem('v4_buy')||'{}')); }catch(e){}
-function ages(r){ return people(r).filter(p=>/\(crian/.test(p)).map(p=>{ const m=p.match(/(\d+(?:[.,]\d+)?)\s*ano/); return /beb[eê]/i.test(p)?0:(m?parseFloat(m[1].replace(',','.')):4); }); }
+let ON={}, PR={}; try{ ON=JSON.parse(localStorage.getItem('v4_on')||'{}'); PR=JSON.parse(localStorage.getItem('v4_pr')||'{}'); }catch(e){}
+const saveB=()=>{ try{ localStorage.setItem('v4_buy',JSON.stringify(P)); localStorage.setItem('v4_on',JSON.stringify(ON)); localStorage.setItem('v4_pr',JSON.stringify(PR)); }catch(e){} };
+function ages(r){ const ps=people(r), novo=ps.some(p=>/\((adulto|crian)/.test(p)); return ps.filter(p=>!novo||/\(crian/.test(p)).map(p=>{ const m=p.match(/(\d+(?:[.,]\d+)?)\s*ano/); return /beb[eê]/i.test(p)?0:(m?parseFloat(m[1].replace(',','.')):4); }); }
+const money=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function renderBuy(){
   const sim=ROWS.filter(r=>r['Presença']==='SIM'); let ad=0, kid=0, baby=0;
-  sim.forEach(r=>{ const h=head(r); ad+=h.ad; const ag=ages(r); const nc=h.cr; ag.forEach(a=>a<2?baby++:kid++); if(ag.length<nc) kid+=nc-ag.length; });
-  const A=ad+P.extraA, K=kid+P.extraC, B=baby, m=1+P.marg/100, pes=A+K+B;
-  const beerA=Math.round(A*P.beer/100);
-  // fatores por pessoa (festa 16h–20h, 4h, com bolo)
+  sim.forEach(r=>{ const h=head(r); ad+=h.ad; const ag=ages(r); ag.forEach(a=>a<2?baby++:kid++); if(ag.length<h.cr) kid+=h.cr-ag.length; });
+  const A=ad+P.extraA, K=kid+P.extraC, B=baby, m=1+P.marg/100, pes=A+K+B, beerA=Math.round(A*P.beer/100);
+  const un=u=>u==='ml'?' ml':u==='g'?' g':u==='kg'?' kg':'';
+  // id, nome, unidade, por adulto, por criança, por bebê, embalagem, qtd/embalagem, [base de adultos], [legenda]
   const IT=[
-   ['🥟 Salgadinhos','un',12,8,0,'cento',100],
-   ['🍬 Docinhos','un',5,6,0,'cento',100],
-   ['🎂 Bolo','g',100,100,0,'kg',1000],
-   ['🥤 Refrigerante','ml',600,400,0,'PET 2 L',2000],
-   ['🧃 Suco','ml',300,400,0,'litro',1000],
-   ['💧 Água','ml',300,300,100,'garrafa 500 ml',500],
-   ['🍺 Cerveja (só '+beerA+' adultos)','ml',350*3,0,0,'lata 350 ml',350,beerA],
-   ['🧊 Gelo','kg',0.5,0.3,0,'saco 5 kg',5],
-   ['🥤 Copos descartáveis','un',3,3,1,'pacote 50',50],
-   ['🍽️ Pratinhos','un',2,2,0,'pacote 50',50],
-   ['🧻 Guardanapos','un',3,3,1,'pacote 50',50],
+   ['salg','🥟 Salgadinhos','un',12,8,0,'cento',100],
+   ['doce','🍬 Docinhos','un',5,6,0,'cento',100],
+   ['bolo','🎂 Bolo','g',100,100,0,'kg',1000],
+   ['refri','🥤 Refrigerante','ml',600,400,0,'PET 2 L',2000],
+   ['suco','🧃 Suco','ml',300,400,0,'litro',1000],
+   ['agua','💧 Água','ml',300,300,100,'garrafa 500 ml',500],
+   ['cerv','🍺 Cerveja','ml',1050,0,0,'lata 350 ml',350,beerA,'3 latas × '+beerA+' adultos que bebem'],
+   ['gelo','🧊 Gelo','kg',0.5,0.3,0,'saco 5 kg',5],
+   ['lemb','🎁 Lembrancinhas','un',P.lemb==='t'?1:0,1,1,'unidade',1,null,P.lemb==='t'?'1 por pessoa':'1 por criança e bebê'],
+   ['copo','🥤 Copos descartáveis','un',3,3,1,'pacote 50',50],
+   ['prato','🍽️ Pratinhos','un',2,2,0,'pacote 50',50],
+   ['guard','🧻 Guardanapos','un',3,3,1,'pacote 50',50],
   ];
-  const rows=IT.map(([nm,u,fa,fk,fb,pk,pq,base])=>{ const a=base!=null?base:A; const tot=(a*fa+K*fk+B*fb)*m; const n=Math.ceil(tot/pq); const show=u==='ml'?(tot/1000).toFixed(1)+' L':u==='g'?(tot/1000).toFixed(1)+' kg':Math.ceil(tot)+(u==='kg'?' kg':' un');
-    return `<tr><td>${nm}<small>${base!=null?'3 latas por adulto que bebe':fa+(u==='ml'?' ml':u==='g'?' g':u==='kg'?' kg':''} por adulto · ${fk}${u==='ml'?' ml':u==='g'?' g':u==='kg'?' kg':''} por criança</small></td><td class="n">${show}</td><td class="n buy"><b>${n}</b><small>${pk}</small></td></tr>`; }).join('');
-  const seats=Math.ceil((A+K)*P.seat/100), sets=Math.ceil(seats/4);
+  let total=0, ativos=0;
+  const rows=IT.map(([id,nm,u,fa,fk,fb,pk,pq,base,leg])=>{ const on=ON[id]!==false; const a=base!=null?base:A; const tot=(a*fa+K*fk+B*fb)*(id==='lemb'?1:m); const n=Math.ceil(tot/pq); const pr=+PR[id]||0, cost=on?n*pr:0; if(on){ total+=cost; ativos++; }
+    const show=u==='ml'?(tot/1000).toFixed(1)+' L':u==='g'?(tot/1000).toFixed(1)+' kg':Math.ceil(tot)+(u==='kg'?' kg':' un');
+    return `<tr class="${on?'':'off'}"><td><label class="sw"><input type="checkbox" data-on="${id}" ${on?'checked':''}> ${nm}</label><small>${leg||fa+un(u)+' por adulto · '+fk+un(u)+' por criança'}</small></td>
+      <td class="n">${on?show:'—'}</td><td class="n buy"><b>${on?n:'—'}</b><small>${pk}</small></td>
+      <td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="${id}" value="${pr||''}" placeholder="R$"><small>${on&&pr?money(cost):'por '+pk}</small></td></tr>`; }).join('');
+  const seats=Math.ceil((A+K)*P.seat/100), sets=Math.ceil(seats/4), setCost=sets*(+PR.set||0); total+=ON.set===false?0:setCost;
   $('#buy').innerHTML=`
   <div class="kpi"><div><b>${pes}</b><small>PESSOAS PREVISTAS</small></div><div><b>${A}</b><small>ADULTOS</small></div><div><b>${K}${B?'+'+B:''}</b><small>CRIANÇAS${B?' + BEBÊS':''}</small></div></div>
-  <p class="muted" style="margin:-6px 0 10px">Confirmados até agora: ${ad} adultos, ${kid} crianças${baby?', '+baby+' bebê(s) (até 2 anos, não consomem)':''}. Ajuste abaixo quem ainda não respondeu.</p>
+  <p class="muted" style="margin:-6px 0 10px">Confirmados: ${ad} adultos, ${kid} crianças${baby?', '+baby+' bebê(s) (até 2 anos, só contam em água, copo e lembrancinha)':''}. Ajuste abaixo quem ainda não respondeu.</p>
   <div class="pbox">
     <label>Adultos ainda sem resposta <input type="number" min="0" data-p="extraA" value="${P.extraA}"></label>
     <label>Crianças ainda sem resposta <input type="number" min="0" data-p="extraC" value="${P.extraC}"></label>
     <label>Margem de segurança (%) <input type="number" min="0" max="50" data-p="marg" value="${P.marg}"></label>
     <label>Adultos que bebem cerveja (%) <input type="number" min="0" max="100" data-p="beer" value="${P.beer}"></label>
     <label>Lugares sentados (% dos convidados) <input type="number" min="30" max="100" data-p="seat" value="${P.seat}"></label>
+    <label>Lembrancinha para <select data-p="lemb"><option value="c" ${P.lemb==='c'?'selected':''}>só crianças</option><option value="t" ${P.lemb==='t'?'selected':''}>todos</option></select></label>
   </div>
+  <div class="tot">💰 Orçamento dos itens marcados: <b>${money(total)}</b><small>${ativos} itens + aluguel · preencha os preços na última coluna</small></div>
   <div class="sec px">🪑 ALUGUEL</div>
-  <table><tr><th>Item</th><th class="n">Cálculo</th><th class="n">Alugar</th></tr>
-   <tr><td>Jogos de mesa + 4 cadeiras<small>${seats} lugares ÷ 4 (bebês no colo)</small></td><td class="n">${seats} cadeiras</td><td class="n buy"><b>${sets}</b><small>jogos</small></td></tr>
-   <tr><td>Mesa do bolo / buffet<small>não conta nos jogos</small></td><td class="n">—</td><td class="n buy"><b>1–2</b><small>mesas</small></td></tr></table>
-  <div class="sec px">🛒 LISTA DE COMPRAS</div>
-  <table><tr><th>Item</th><th class="n">Consumo</th><th class="n">Comprar</th></tr>${rows}</table>
-  <p class="fonte">Base: 12 salgados e 5–6 docinhos por adulto, 8 salgados e 6–7 docinhos por criança, 100–120 g de bolo, PET de refri para 4 adultos, 3 unidades de cerveja por adulto que bebe (bufês infantis e calculadora Receiteria). Ajustado para 4 h de festa e crianças pequenas; bebês até 2 anos ficam de fora. Total já inclui a margem.</p>`;
-  $('#buy').querySelectorAll('input[data-p]').forEach(i=>i.onchange=()=>{ P[i.dataset.p]=+i.value||0; try{localStorage.setItem('v4_buy',JSON.stringify(P));}catch(e){} renderBuy(); });
+  <table><tr><th>Item</th><th class="n">Cálculo</th><th class="n">Alugar</th><th class="n">Preço</th></tr>
+   <tr class="${ON.set===false?'off':''}"><td><label class="sw"><input type="checkbox" data-on="set" ${ON.set===false?'':'checked'}> Jogo mesa + 4 cadeiras</label><small>${seats} lugares ÷ 4 (bebês no colo)</small></td><td class="n">${seats} cadeiras</td><td class="n buy"><b>${sets}</b><small>jogos</small></td><td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="set" value="${PR.set||''}" placeholder="R$"><small>${PR.set?money(setCost):'por jogo'}</small></td></tr></table>
+  <div class="sec px">🛒 LISTA DE COMPRAS <span style="color:#fff;opacity:.7">(desmarque o que não vai oferecer)</span></div>
+  <table><tr><th>Item</th><th class="n">Consumo</th><th class="n">Comprar</th><th class="n">Preço un.</th></tr>${rows}</table>
+  <p class="fonte">Base: 12 salgados e 5–6 docinhos por adulto, 8 salgados e 6–7 docinhos por criança, 100–120 g de bolo, PET de refri para 4 adultos, 3 unidades de cerveja por adulto que bebe (bufês infantis e calculadora Receiteria). Ajustado para 4 h de festa e crianças pequenas. Quantidades já incluem a margem; o orçamento usa os preços que você digitar e fica salvo neste celular.</p>`;
+  $('#buy').querySelectorAll('[data-p]').forEach(i=>i.onchange=()=>{ P[i.dataset.p]=i.tagName==='SELECT'?i.value:(+i.value||0); saveB(); renderBuy(); });
+  $('#buy').querySelectorAll('[data-on]').forEach(i=>i.onchange=()=>{ ON[i.dataset.on]=i.checked; saveB(); renderBuy(); });
+  $('#buy').querySelectorAll('[data-pr]').forEach(i=>i.onchange=()=>{ PR[i.dataset.pr]=+String(i.value).replace(',','.')||0; saveB(); renderBuy(); });
 }
+let KD={}, KO='';
+function showK(){ const d=$('#kdet'); if(!KO||!KD[KO]){ d.classList.add('hide'); return; } const [t,items]=KD[KO]; d.classList.remove('hide'); d.innerHTML=`<h4>${t} (${items.length})</h4>`+(items.length?`<ul>${items.map((x,i)=>`<li>${i+1}. ${x}</li>`).join('')}</ul>`:'<p class="muted">Nada aqui ainda.</p>'); }
+$('#kpi').addEventListener('click',e=>{ const c=e.target.closest('[data-k]'); if(!c) return; KO=KO===c.dataset.k?'':c.dataset.k; $('#kpi').querySelectorAll('div[data-k]').forEach(x=>x.classList.toggle('on',x.dataset.k===KO)); showK(); });
 function showLogin(msg){ $('#app').classList.add('hide'); $('#login').classList.remove('hide'); if(msg) $('#login p').textContent=msg; }
 $('#enter').onclick=()=>{ KEY=$('#tok').value.trim(); if(!KEY) return; try{localStorage.setItem('v4_tok',KEY);}catch(e){} load(); };
 $('#go').onclick=load; $('#q').oninput=render;
