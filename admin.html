@@ -45,6 +45,7 @@ td.n,th.n{text-align:right;white-space:nowrap}td b{font-size:16px}td small{displ
 .fonte{font-size:12px;opacity:.7;line-height:1.5}
 .sw{display:flex;gap:8px;align-items:center;font-weight:800;cursor:pointer}.sw input{width:22px;height:22px;margin:0;padding:0}tr.off td{opacity:.45}tr.off td.buy{background:#eee!important}
 .pr{width:78px;padding:6px 4px;font-size:14px;background:#fff;color:#1b1b2f;border:2px solid #999}
+.fn{display:block;width:78px;margin-top:4px;padding:3px 4px;font-size:11px;font-weight:600;background:#fff;color:#555;border:1px solid #bbb}
 .tot{background:#dff7e0;color:#1b1b2f;border:3px dashed #43b047;padding:10px 12px;font-weight:800;margin-bottom:12px;text-align:center;font-size:16px}.tot b{font-size:22px;color:#2f8a3a}.tot small{display:block;font-weight:600;color:#555;font-size:12px}
 #avisos{background:#fff3c2;color:#1b1b2f;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px 14px;margin-bottom:12px}#avisos h4{font-size:13px;margin-bottom:8px;color:#9a6b00}#avisos ul{list-style:none;display:grid;gap:5px;font-size:14px}#avisos li small{color:#666}
 </style>
@@ -77,7 +78,7 @@ async function load(){
   $('#go').textContent='⏳ Carregando…';
   try{ const j=await (await fetch(`${API}?action=list&chave=${encodeURIComponent(KEY)}`)).json();
     if(!j.ok){ try{localStorage.removeItem('v4_tok');}catch(e){} KEY=''; showLogin('Chave incorreta. Tente de novo.'); return; }
-    ROWS=j.rows.slice().reverse(); $('#login').classList.add('hide'); $('#app').classList.remove('hide'); render(); $('#when').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    ROWS=j.rows.slice().reverse(); if(!CFG_LOADED) loadCfg(); $('#login').classList.add('hide'); $('#app').classList.remove('hide'); render(); $('#when').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){ $('#list').innerHTML='<p class="muted">Sem conexão agora. Toque em Atualizar.</p>'; }
   $('#go').textContent='🔄 Atualizar';
 }
@@ -128,8 +129,12 @@ function render(){
 /* ---------- Compras: estudo de consumo (fontes: Receiteria; Guia da Semana/bufê infantil) ---------- */
 const PD={extraA:10,extraC:4,marg:10,beer:50,seat:100,lemb:'c',priceSet:0};
 let P=Object.assign({},PD); try{ Object.assign(P,JSON.parse(localStorage.getItem('v4_buy')||'{}')); }catch(e){}
-let ON={}, PR={}; try{ ON=JSON.parse(localStorage.getItem('v4_on')||'{}'); PR=JSON.parse(localStorage.getItem('v4_pr')||'{}'); }catch(e){}
-const saveB=()=>{ try{ localStorage.setItem('v4_buy',JSON.stringify(P)); localStorage.setItem('v4_on',JSON.stringify(ON)); localStorage.setItem('v4_pr',JSON.stringify(PR)); }catch(e){} };
+let ON={}, PR={salg:88,doce:140}, FN={salg:'Pontual Doces',doce:'Pontual Doces'}; try{ ON=JSON.parse(localStorage.getItem('v4_on')||'{}'); PR=Object.assign(PR,JSON.parse(localStorage.getItem('v4_pr')||'{}')); FN=Object.assign(FN,JSON.parse(localStorage.getItem('v4_fn')||'{}')); }catch(e){}
+let CFG_LOADED=false, saveT=null;
+async function loadCfg(){ try{ const j=await (await fetch(`${API}?action=cfg&chave=${encodeURIComponent(KEY)}`)).json(); if(j.ok&&j.cfg&&j.cfg.P){ Object.assign(P,j.cfg.P); ON=j.cfg.ON||{}; PR=j.cfg.PR||PR; FN=j.cfg.FN||FN; } CFG_LOADED=true; if(F==='buy') renderBuy(); }catch(e){ CFG_LOADED=true; } }
+const saveB=()=>{ try{ localStorage.setItem('v4_buy',JSON.stringify(P)); localStorage.setItem('v4_on',JSON.stringify(ON)); localStorage.setItem('v4_pr',JSON.stringify(PR)); localStorage.setItem('v4_fn',JSON.stringify(FN)); }catch(e){}
+  const st=$('#savest'); if(st){ st.textContent='salvando…'; st.style.color='#c80'; }
+  clearTimeout(saveT); saveT=setTimeout(async()=>{ try{ const r=await (await fetch(API,{method:'POST',body:JSON.stringify({action:'cfg',chave:KEY,data:{P,ON,PR,FN}})})).json(); const st=$('#savest'); if(st){ st.textContent=r.ok?'✔ salvo na nuvem':'⚠ não salvou, tente de novo'; st.style.color=r.ok?'#2f8a3a':'#c00'; } }catch(e){ const st=$('#savest'); if(st){ st.textContent='⚠ sem conexão, não salvou'; st.style.color='#c00'; } } },600); };
 function ages(r){ const ps=people(r), novo=ps.some(p=>/\((adulto|crian)/.test(p)); return ps.filter(p=>!novo||/\(crian/.test(p)).map(p=>{ const m=p.match(/(\d+(?:[.,]\d+)?)\s*ano/); return /beb[eê]/i.test(p)?0:(m?parseFloat(m[1].replace(',','.')):4); }); }
 const money=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function renderBuy(){
@@ -157,7 +162,7 @@ function renderBuy(){
     const show=u==='ml'?(tot/1000).toFixed(1)+' L':u==='g'?(tot/1000).toFixed(1)+' kg':Math.ceil(tot)+(u==='kg'?' kg':' un');
     return `<tr class="${on?'':'off'}"><td><label class="sw"><input type="checkbox" data-on="${id}" ${on?'checked':''}> ${nm}</label><small>${leg||fa+un(u)+' por adulto · '+fk+un(u)+' por criança'}</small></td>
       <td class="n">${on?show:'—'}</td><td class="n buy"><b>${on?n:'—'}</b><small>${pk}</small></td>
-      <td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="${id}" value="${pr||''}" placeholder="R$"><small>${on&&pr?money(cost):'por '+pk}</small></td></tr>`; }).join('');
+      <td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="${id}" value="${pr||''}" placeholder="R$"><small>${on&&pr?money(cost):'por '+pk}</small><input class="fn" data-fn="${id}" value="${esc(FN[id]||'')}" placeholder="fornecedor"></td></tr>`; }).join('');
   const seats=Math.ceil((A+K)*P.seat/100), sets=Math.ceil(seats/4), setCost=sets*(+PR.set||0); total+=ON.set===false?0:setCost;
   $('#buy').innerHTML=`
   <div class="kpi"><div><b>${pes}</b><small>PESSOAS PREVISTAS</small></div><div><b>${A}</b><small>ADULTOS</small></div><div><b>${K}${B?'+'+B:''}</b><small>CRIANÇAS${B?' + BEBÊS':''}</small></div></div>
@@ -170,16 +175,17 @@ function renderBuy(){
     <label>Lugares sentados (% dos convidados) <input type="number" min="30" max="100" data-p="seat" value="${P.seat}"></label>
     <label>Lembrancinha para <select data-p="lemb"><option value="c" ${P.lemb==='c'?'selected':''}>só crianças</option><option value="t" ${P.lemb==='t'?'selected':''}>todos</option></select></label>
   </div>
-  <div class="tot">💰 Orçamento dos itens marcados: <b>${money(total)}</b><small>${ativos} itens + aluguel · preencha os preços na última coluna</small></div>
+  <div class="tot">💰 Orçamento dos itens marcados: <b>${money(total)}</b><small>${ativos} itens + aluguel · preencha os preços na última coluna</small><small id="savest" style="color:#2f8a3a">${CFG_LOADED?'✔ salvo na nuvem (abre igual em qualquer celular)':'carregando o que você já preencheu…'}</small></div>
   <div class="sec px">🪑 ALUGUEL</div>
   <table><tr><th>Item</th><th class="n">Cálculo</th><th class="n">Alugar</th><th class="n">Preço</th></tr>
-   <tr class="${ON.set===false?'off':''}"><td><label class="sw"><input type="checkbox" data-on="set" ${ON.set===false?'':'checked'}> Jogo mesa + 4 cadeiras</label><small>${seats} lugares ÷ 4 (bebês no colo)</small></td><td class="n">${seats} cadeiras</td><td class="n buy"><b>${sets}</b><small>jogos</small></td><td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="set" value="${PR.set||''}" placeholder="R$"><small>${PR.set?money(setCost):'por jogo'}</small></td></tr></table>
+   <tr class="${ON.set===false?'off':''}"><td><label class="sw"><input type="checkbox" data-on="set" ${ON.set===false?'':'checked'}> Jogo mesa + 4 cadeiras</label><small>${seats} lugares ÷ 4 (bebês no colo)</small></td><td class="n">${seats} cadeiras</td><td class="n buy"><b>${sets}</b><small>jogos</small></td><td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="set" value="${PR.set||''}" placeholder="R$"><small>${PR.set?money(setCost):'por jogo'}</small><input class="fn" data-fn="set" value="${esc(FN.set||'')}" placeholder="fornecedor"></td></tr></table>
   <div class="sec px">🛒 LISTA DE COMPRAS <span style="color:#fff;opacity:.7">(desmarque o que não vai oferecer)</span></div>
   <table><tr><th>Item</th><th class="n">Consumo</th><th class="n">Comprar</th><th class="n">Preço un.</th></tr>${rows}</table>
-  <p class="fonte">Base: 12 salgados e 5–6 docinhos por adulto, 8 salgados e 6–7 docinhos por criança, 100–120 g de bolo, PET de refri para 4 adultos, 3 unidades de cerveja por adulto que bebe (bufês infantis e calculadora Receiteria). Ajustado para 4 h de festa e crianças pequenas. Quantidades já incluem a margem; o orçamento usa os preços que você digitar e fica salvo neste celular.</p>`;
+  <p class="fonte">Base: 12 salgados e 5–6 docinhos por adulto, 8 salgados e 6–7 docinhos por criança, 100–120 g de bolo, PET de refri para 4 adultos, 3 unidades de cerveja por adulto que bebe (bufês infantis e calculadora Receiteria). Ajustado para 4 h de festa e crianças pequenas. Quantidades já incluem a margem. Preços e fornecedores que você digitar ficam salvos na planilha (aba Config) e aparecem em qualquer celular. Pontual Doces (9 9283-1747): salgados R$ 88 o cento (mín. 30 un), docinhos R$ 140 o cento (mín. 25 por sabor, pedir com 3 dias), mini churros R$ 76 o cento; combo 14 = 100 salgados + Coca 2 L por R$ 99,80.</p>`;
   $('#buy').querySelectorAll('[data-p]').forEach(i=>i.onchange=()=>{ P[i.dataset.p]=i.tagName==='SELECT'?i.value:(+i.value||0); saveB(); renderBuy(); });
   $('#buy').querySelectorAll('[data-on]').forEach(i=>i.onchange=()=>{ ON[i.dataset.on]=i.checked; saveB(); renderBuy(); });
   $('#buy').querySelectorAll('[data-pr]').forEach(i=>i.onchange=()=>{ PR[i.dataset.pr]=+String(i.value).replace(',','.')||0; saveB(); renderBuy(); });
+  $('#buy').querySelectorAll('[data-fn]').forEach(i=>i.onchange=()=>{ FN[i.dataset.fn]=i.value.trim().slice(0,40); saveB(); });
 }
 let KD={}, KO='';
 function showK(){ const d=$('#kdet'); if(!KO||!KD[KO]){ d.classList.add('hide'); return; } const [t,items]=KD[KO]; d.classList.remove('hide'); d.innerHTML=`<h4>${t} (${items.length})</h4>`+(items.length?`<ul>${items.map((x,i)=>`<li>${i+1}. ${x}</li>`).join('')}</ul>`:'<p class="muted">Nada aqui ainda.</p>'); }
