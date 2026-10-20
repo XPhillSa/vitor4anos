@@ -79,7 +79,7 @@ async function load(){
   $('#go').textContent='⏳ Carregando…';
   try{ const j=await (await fetch(`${API}?action=list&chave=${encodeURIComponent(KEY)}`)).json();
     if(!j.ok){ try{localStorage.removeItem('v4_tok');}catch(e){} KEY=''; showLogin('Chave incorreta. Tente de novo.'); return; }
-    ROWS=j.rows.slice().reverse(); if(!CFG_LOADED) loadCfg(); $('#login').classList.add('hide'); $('#app').classList.remove('hide'); render(); $('#when').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    ROWS=j.rows.slice().reverse(); DUP=[]; { const seen={}; ROWS=ROWS.filter(r=>{ const t=String(r['Telefone']||'').replace(/\D/g,'').slice(-8); if(t.length<8) return true; if(seen[t]){ DUP.push(`${esc(r['Nome'])} → ${esc(seen[t])}`); return false; } seen[t]=r['Nome']; return true; }); } if(!CFG_LOADED) loadCfg(); $('#login').classList.add('hide'); $('#app').classList.remove('hide'); render(); $('#when').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){ $('#list').innerHTML='<p class="muted">Sem conexão agora. Toque em Atualizar.</p>'; }
   $('#go').textContent='🔄 Atualizar';
 }
@@ -113,7 +113,7 @@ function render(){
   // Avisos: tudo que precisa de atenção
   const AV=[]; const now=Date.now(), dia=86400000;
   const rec=ROWS.filter(r=>now-new Date(r['Data/Hora']).getTime()<dia); if(rec.length) AV.push(`🆕 <b>${rec.length}</b> resposta(s) nas últimas 24 h: ${rec.map(r=>esc(r['Nome'])).join(', ')}`);
-  L.rest.forEach(x=>AV.push(x));
+  L.rest.forEach(x=>AV.push(x)); DUP.forEach(d=>AV.push(`🔁 Resposta repetida (mesmo telefone), contei só a mais recente: ${d}`));
   sim.forEach(r=>{ const ps=people(r); if(ps.some(p=>/sem nome/i.test(p))) AV.push(`✏️ ${esc(r['Nome'])} não escreveu o nome de quem vem junto <small>· conferir</small>`); if(ps.some(p=>/\(adulto\)/.test(p)&&/\s(e|&)\s/i.test(nn(p)))) AV.push(`👀 ${esc(r['Nome'])} cadastrou duas pessoas em um nome só <small>· contado como 2</small>`); if(ps.some(p=>/\(crian/.test(p)&&!/ano|beb/.test(p))) AV.push(`🎂 ${esc(r['Nome'])}: criança sem idade informada`); });
   const semTel=sim.filter(r=>!String(r['Telefone']||'').replace(/\D/g,'')).length; if(semTel) AV.push(`📵 ${semTel} família(s) sem WhatsApp cadastrado`);
   const prazo=new Date('2026-10-17T23:59:59-03:00'), fest=new Date('2026-10-24T16:00:00-03:00'); const dd=Math.ceil((fest-now)/dia); AV.push(now>prazo?`⏰ Prazo de confirmação encerrou (17/10). Festa em <b>${dd}</b> dia(s).`:`⏰ Prazo de confirmação: 17/10. Festa em <b>${dd}</b> dia(s).`);
@@ -197,7 +197,7 @@ function renderBuy(){
   $('#expCsv').onclick=()=>{ const x=window.__exp; const csv=['Item;Quantidade;Embalagem;Preço unit.;Custo;Fornecedor',...x.EXP.map(e=>[e.nm,e.n,e.pk,String(e.pr).replace('.',','),String(e.cost.toFixed(2)).replace('.',','),e.fn].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')),`"TOTAL";;;;"${x.total.toFixed(2).replace('.',',')}";`].join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='lista-compras-vitor4.csv'; a.click(); };
   $('#expPr').onclick=()=>window.print();
 }
-let KD={}, KO='';
+let KD={}, KO='', DUP=[];
 function showK(){ const d=$('#kdet'); if(!KO||!KD[KO]){ d.classList.add('hide'); return; } const [t,items]=KD[KO]; d.classList.remove('hide'); d.innerHTML=`<h4>${t} (${items.length})</h4>`+(items.length?`<ul>${items.map((x,i)=>`<li>${i+1}. ${x}</li>`).join('')}</ul>`:'<p class="muted">Nada aqui ainda.</p>'); }
 $('#kpi').addEventListener('click',e=>{ const c=e.target.closest('[data-k]'); if(!c) return; KO=KO===c.dataset.k?'':c.dataset.k; $('#kpi').querySelectorAll('div[data-k]').forEach(x=>x.classList.toggle('on',x.dataset.k===KO)); showK(); });
 function showLogin(msg){ $('#app').classList.add('hide'); $('#login').classList.remove('hide'); if(msg) $('#login p').textContent=msg; }
