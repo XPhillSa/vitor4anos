@@ -131,11 +131,11 @@ function render(){
 const PD={extraA:0,extraC:0,marg:10,beer:50,seat:100,lemb:'c',priceSet:0,emp:20};
 let P=Object.assign({},PD); try{ Object.assign(P,JSON.parse(localStorage.getItem('v4_buy')||'{}')); }catch(e){}
 let ON={}, PR={salg:88,doce:140,emp:26}, FN={salg:'Pontual Doces',doce:'Pontual Doces',emp:'Pontual Doces'}; try{ ON=JSON.parse(localStorage.getItem('v4_on')||'{}'); PR=Object.assign(PR,JSON.parse(localStorage.getItem('v4_pr')||'{}')); FN=Object.assign(FN,JSON.parse(localStorage.getItem('v4_fn')||'{}')); }catch(e){}
-let CFG_LOADED=false, saveT=null;
-async function loadCfg(){ try{ const j=await (await fetch(`${API}?action=cfg&chave=${encodeURIComponent(KEY)}`)).json(); if(j.ok&&j.cfg&&j.cfg.P){ Object.assign(P,j.cfg.P); ON=j.cfg.ON||{}; PR=Object.assign({},PR,j.cfg.PR||{}); FN=Object.assign({},FN,j.cfg.FN||{}); } CFG_LOADED=true; if(F==='buy') renderBuy(); }catch(e){ CFG_LOADED=true; } }
+let CFG_LOADED=false, saveT=null, G=[];
+async function loadCfg(){ try{ const j=await (await fetch(`${API}?action=cfg&chave=${encodeURIComponent(KEY)}`)).json(); if(j.ok&&j.cfg&&j.cfg.P){ Object.assign(P,j.cfg.P); ON=j.cfg.ON||{}; G=j.cfg.G||[]; PR=Object.assign({},PR,j.cfg.PR||{}); FN=Object.assign({},FN,j.cfg.FN||{}); } CFG_LOADED=true; if(F==='buy') renderBuy(); }catch(e){ CFG_LOADED=true; } }
 const saveB=()=>{ try{ localStorage.setItem('v4_buy',JSON.stringify(P)); localStorage.setItem('v4_on',JSON.stringify(ON)); localStorage.setItem('v4_pr',JSON.stringify(PR)); localStorage.setItem('v4_fn',JSON.stringify(FN)); }catch(e){}
   const st=$('#savest'); if(st){ st.textContent='salvando…'; st.style.color='#c80'; }
-  clearTimeout(saveT); saveT=setTimeout(async()=>{ try{ const r=await (await fetch(API,{method:'POST',body:JSON.stringify({action:'cfg',chave:KEY,data:{P,ON,PR,FN}})})).json(); const st=$('#savest'); if(st){ st.textContent=r.ok?'✔ salvo na nuvem':'⚠ não salvou, tente de novo'; st.style.color=r.ok?'#2f8a3a':'#c00'; } }catch(e){ const st=$('#savest'); if(st){ st.textContent='⚠ sem conexão, não salvou'; st.style.color='#c00'; } } },600); };
+  clearTimeout(saveT); saveT=setTimeout(async()=>{ try{ const r=await (await fetch(API,{method:'POST',body:JSON.stringify({action:'cfg',chave:KEY,data:{P,ON,PR,FN,G}})})).json(); const st=$('#savest'); if(st){ st.textContent=r.ok?'✔ salvo na nuvem':'⚠ não salvou, tente de novo'; st.style.color=r.ok?'#2f8a3a':'#c00'; } }catch(e){ const st=$('#savest'); if(st){ st.textContent='⚠ sem conexão, não salvou'; st.style.color='#c00'; } } },600); };
 function ages(r){ const ps=people(r), novo=ps.some(p=>/\((adulto|crian)/.test(p)); return ps.filter(p=>!novo||/\(crian/.test(p)).map(p=>{ const m=p.match(/(\d+(?:[.,]\d+)?)\s*ano/); return /beb[eê]/i.test(p)?0:(m?parseFloat(m[1].replace(',','.')):4); }); }
 const money=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function renderBuy(){
@@ -149,8 +149,8 @@ function renderBuy(){
    ['emp','🥧 Empadas','un',12*(P.emp/100)/1.5,8*(P.emp/100)/1.5,0,'bandeja 25',25,null,P.emp+'% dos salgados (1 empada = 1,5 frito)'],
    ['doce','🍬 Docinhos','un',5,6,0,'cento',100],
    ['bolo','🎂 Bolo','g',100,100,0,'kg',1000],
-   ['refri','🥤 Refrigerante','ml',600,400,0,'PET 2 L',2000],
-   ['suco','🧃 Suco','ml',300,400,0,'litro',1000],
+   ['refri','🥤 Refrigerante (só adultos)','ml',600,0,0,'PET 2 L',2000],
+   ['suco','🧃 Suco (crianças + alguns adultos)','ml',100,500,0,'litro',1000],
    ['agua','💧 Água','ml',300,300,100,'garrafa 500 ml',500],
    ['cerv','🍺 Cerveja','ml',1050,0,0,'lata 350 ml',350,beerA,'3 latas × '+beerA+' adultos que bebem'],
    ['gelo','🧊 Gelo','kg',0.5,0.3,0,'saco 5 kg',5],
@@ -162,7 +162,10 @@ function renderBuy(){
   let total=0, ativos=0; const EXP=[];
   const rows=IT.map(([id,nm,u,fa,fk,fb,pk,pq,base,leg])=>{ const on=ON[id]!==false; const a=base!=null?base:A; const tot=(a*fa+K*fk+B*fb)*(id==='lemb'?1:m); const n=Math.ceil(tot/pq); const pr=+PR[id]||0, cost=on?n*pr:0; if(on){ total+=cost; ativos++; EXP.push({nm:nm.replace(/^\S+\s/,''),n,pk,pr,cost,fn:FN[id]||''}); }
     const show=u==='ml'?(tot/1000).toFixed(1)+' L':u==='g'?(tot/1000).toFixed(1)+' kg':Math.ceil(tot)+(u==='kg'?' kg':' un');
-    return `<tr class="${on?'':'off'}"><td><label class="sw"><input type="checkbox" data-on="${id}" ${on?'checked':''}> ${nm}</label><small>${leg||(+fa.toFixed(1))+un(u)+' por adulto · '+(+fk.toFixed(1))+un(u)+' por criança'}</small></td>
+    const gb=G.filter(g=>g.cat===id), gq=gb.reduce((a,g)=>a+(+g.q||0),0), gv=gb.reduce((a,g)=>a+(+g.v||0),0);
+    const need=u==='ml'?tot/1000:u==='g'?tot/1000:tot, uu=u==='ml'?'L':u==='g'?'kg':u==='kg'?'kg':'un';
+    const gnote=gb.length?`<small style="color:#2f8a3a;font-weight:800">✔ comprado: ${(+gq.toFixed(1)).toLocaleString('pt-BR')} ${uu} · ${money(gv)}${gq>=need?' (suficiente)':' — faltam '+(+(need-gq).toFixed(1)).toLocaleString('pt-BR')+' '+uu}</small>`:'';
+    return `<tr class="${on?'':'off'}"><td><label class="sw"><input type="checkbox" data-on="${id}" ${on?'checked':''}> ${nm}</label>${gnote}<small>${leg||(+fa.toFixed(1))+un(u)+' por adulto · '+(+fk.toFixed(1))+un(u)+' por criança'}</small></td>
       <td class="n">${on?show:'—'}</td><td class="n buy"><b>${on?n:'—'}</b><small>${pk}</small></td>
       <td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="${id}" value="${pr||''}" placeholder="R$"><small>${on&&pr?money(cost):'por '+pk}</small><input class="fn" data-fn="${id}" value="${esc(FN[id]||'')}" placeholder="fornecedor"></td></tr>`; }).join('');
   const seats=Math.ceil((A+K)*P.seat/100), sets=Math.ceil(seats/4), setCost=sets*(+PR.set||0); total+=ON.set===false?0:setCost; if(ON.set!==false) EXP.push({nm:'Jogo mesa + 4 cadeiras (aluguel)',n:sets,pk:'jogos',pr:+PR.set||0,cost:setCost,fn:FN.set||''});
@@ -180,8 +183,14 @@ function renderBuy(){
     <label>Lugares sentados (% dos convidados) <input type="number" min="30" max="100" data-p="seat" value="${P.seat}"></label>
     <label>Lembrancinha para <select data-p="lemb"><option value="c" ${P.lemb==='c'?'selected':''}>só crianças</option><option value="t" ${P.lemb==='t'?'selected':''}>todos</option></select></label>
   </div>
+  <div class="tot" style="background:#fff3c2;border-color:#c80;margin-bottom:8px">🧾 Já gasto: <b style="color:#9a6b00">${money(G.reduce((a,g)=>a+(+g.v||0),0))}</b><small>notas lançadas na seção "Já comprado"</small></div>
   <div class="tot">💰 Orçamento dos itens marcados: <b>${money(total)}</b><small>${ativos} itens + aluguel · preencha os preços na última coluna</small><small id="savest" style="color:#2f8a3a">${CFG_LOADED?'✔ salvo na nuvem (abre igual em qualquer celular)':'carregando o que você já preencheu…'}</small></div>
   <div class="bar"><button class="b-blue" id="expWa" style="flex:1">📲 Enviar lista</button><button id="expCsv">⬇ Planilha</button><button id="expPr">🖨 PDF</button></div>
+  ${(()=>{ const gt=G.reduce((a,g)=>a+(+g.v||0),0); const rows=G.map((g,i)=>`<tr><td>${esc(g.d)}<small>${esc(g.loja||'')}${g.dt?' · '+esc(g.dt):''}${g.obs?' · <b style="color:#c80">'+esc(g.obs)+'</b>':''}</small></td><td class="n">${esc(g.qt||'')}</td><td class="n"><b>${money(+g.v||0)}</b></td><td class="n"><button data-gdel="${i}" style="padding:4px 8px;font-size:12px;background:#ffe3e2;color:#9e1b18;border:2px solid #9e1b18">✕</button></td></tr>`).join('');
+    return `<div class="sec px">🧾 JÁ COMPRADO — ${money(gt)}</div>
+    <table><tr><th>Item</th><th class="n">Qtd</th><th class="n">Valor</th><th></th></tr>${rows||'<tr><td colspan="4" class="muted" style="color:#666">Nada lançado ainda.</td></tr>'}
+    <tr><td colspan="4"><div style="display:grid;grid-template-columns:1fr 70px 80px;gap:6px"><input id="gD" placeholder="Item (ex.: copos)" style="padding:8px;font-size:13px;background:#fff;color:#1b1b2f;border:2px solid #999"><input id="gQ" placeholder="Qtd" style="padding:8px;font-size:13px;background:#fff;color:#1b1b2f;border:2px solid #999"><input id="gV" type="number" step="0.01" inputmode="decimal" placeholder="R$" style="padding:8px;font-size:13px;background:#fff;color:#1b1b2f;border:2px solid #999"></div>
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="gL" placeholder="Loja" style="flex:1;padding:8px;font-size:13px;background:#fff;color:#1b1b2f;border:2px solid #999"><button id="gAdd" class="b-red" style="padding:8px 14px;font-size:13px">+ Lançar</button></div></td></tr></table>`; })()}
   <div class="sec px">🪑 ALUGUEL</div>
   <table><tr><th>Item</th><th class="n">Cálculo</th><th class="n">Alugar</th><th class="n">Preço</th></tr>
    <tr class="${ON.set===false?'off':''}"><td><label class="sw"><input type="checkbox" data-on="set" ${ON.set===false?'':'checked'}> Jogo mesa + 4 cadeiras</label><small>${seats} lugares ÷ 4 (bebês no colo)</small></td><td class="n">${seats} cadeiras</td><td class="n buy"><b>${sets}</b><small>jogos</small></td><td class="n"><input class="pr" type="number" inputmode="decimal" min="0" step="0.01" data-pr="set" value="${PR.set||''}" placeholder="R$"><small>${PR.set?money(setCost):'por jogo'}</small><input class="fn" data-fn="set" value="${esc(FN.set||'')}" placeholder="fornecedor"></td></tr></table>
@@ -192,10 +201,12 @@ function renderBuy(){
   $('#buy').querySelectorAll('[data-on]').forEach(i=>i.onchange=()=>{ ON[i.dataset.on]=i.checked; saveB(); renderBuy(); });
   $('#buy').querySelectorAll('[data-pr]').forEach(i=>i.onchange=()=>{ PR[i.dataset.pr]=+String(i.value).replace(',','.')||0; saveB(); renderBuy(); });
   $('#buy').querySelectorAll('[data-fn]').forEach(i=>i.onchange=()=>{ FN[i.dataset.fn]=i.value.trim().slice(0,40); saveB(); });
-  const txt=()=>{ const x=window.__exp; return `🛒 LISTA DE COMPRAS — Festa do Vitor (24/10)\n${x.pes} pessoas (${x.A} adultos, ${x.K} crianças${x.B?', '+x.B+' bebês':''})\n\n`+x.EXP.map(e=>`• ${e.nm}: ${e.n} ${e.pk}${e.pr?' × '+money(e.pr)+' = '+money(e.cost):''}${e.fn?' ('+e.fn+')':''}`).join('\n')+`\n\nTOTAL: ${money(x.total)}`; };
+  const txt=()=>{ const x=window.__exp; return `🛒 LISTA DE COMPRAS — Festa do Vitor (24/10)\n${x.pes} pessoas (${x.A} adultos, ${x.K} crianças${x.B?', '+x.B+' bebês':''})\n\n`+x.EXP.map(e=>`• ${e.nm}: ${e.n} ${e.pk}${e.pr?' × '+money(e.pr)+' = '+money(e.cost):''}${e.fn?' ('+e.fn+')':''}`).join('\n')+`\n\nTOTAL PREVISTO: ${money(x.total)}`+(G.length?`\n\n🧾 JÁ COMPRADO\n`+G.map(g=>`• ${g.d}${g.qt?' ('+g.qt+')':''}: ${money(+g.v||0)}${g.loja?' – '+g.loja:''}`).join('\n')+`\nTOTAL GASTO: ${money(G.reduce((a,g)=>a+(+g.v||0),0))}`:''); };
   $('#expWa').onclick=async()=>{ const t=txt(); try{ if(navigator.share){ await navigator.share({title:'Lista de compras',text:t}); return; } }catch(e){ if(e&&e.name==='AbortError') return; } window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank'); };
   $('#expCsv').onclick=()=>{ const x=window.__exp; const csv=['Item;Quantidade;Embalagem;Preço unit.;Custo;Fornecedor',...x.EXP.map(e=>[e.nm,e.n,e.pk,String(e.pr).replace('.',','),String(e.cost.toFixed(2)).replace('.',','),e.fn].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')),`"TOTAL";;;;"${x.total.toFixed(2).replace('.',',')}";`].join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})); a.download='lista-compras-vitor4.csv'; a.click(); };
   $('#expPr').onclick=()=>window.print();
+  $('#buy').querySelectorAll('[data-gdel]').forEach(b=>b.onclick=()=>{ const g=G[+b.dataset.gdel]; if(!g||!confirm('Apagar "'+g.d+'"?')) return; G.splice(+b.dataset.gdel,1); saveB(); renderBuy(); });
+  $('#gAdd').onclick=()=>{ const d=$('#gD').value.trim(), v=+String($('#gV').value).replace(',','.')||0; if(!d||!v) { $('#gD').focus(); return; } G.push({d,qt:$('#gQ').value.trim(),v,loja:$('#gL').value.trim(),dt:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),cat:'outros'}); saveB(); renderBuy(); };
 }
 let KD={}, KO='', DUP=[];
 function showK(){ const d=$('#kdet'); if(!KO||!KD[KO]){ d.classList.add('hide'); return; } const [t,items]=KD[KO]; d.classList.remove('hide'); d.innerHTML=`<h4>${t} (${items.length})</h4>`+(items.length?`<ul>${items.map((x,i)=>`<li>${i+1}. ${x}</li>`).join('')}</ul>`:'<p class="muted">Nada aqui ainda.</p>'); }
